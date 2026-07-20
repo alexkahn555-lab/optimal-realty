@@ -6,6 +6,10 @@
       {
         "selector": "Literal[value=/#[0-9a-fA-F]{3,8}/]",
         "message": "Raw hex colors are banned in component files. Use Tailwind tokens (bone, ink, marine, teal, coral, hair) defined in tailwind.config.ts."
+      },
+      {
+        "selector": "JSXAttribute[name.name='href'] > Literal",
+        "message": "Raw string hrefs are banned in JSX. Build every internal URL with href(id, locale) from lib/seo/href.ts."
       }
     ]
   },
