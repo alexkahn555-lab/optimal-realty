@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Base shell. Tokens only (bone/ink via @apply). Font families resolve through the
+ * next/font CSS variables set on <html> in app/[locale]/layout.tsx. Every figure is
+ * tabular by default — the single biggest typographic differentiator (root README,
+ * Design system). font-variant-numeric inherits, so setting it on <body> is enough.
+ */
+@layer base {
+  html {
+    @apply bg-bone text-ink;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    font-variant-numeric: tabular-nums;
+    text-rendering: optimizeLegibility;
+  }
+}
