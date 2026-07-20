@@ -71,6 +71,7 @@ export const UI = {
   /* ---- Breadcrumbs -------------------------------------------------------- */
   breadcrumb: {
     home: { en: 'Home', es: 'Inicio' },
+    ariaLabel: { en: 'Breadcrumb', es: 'Ruta de navegación' },
   },
 
   /* ---- Home stub metadata (chrome-level, assembled from confirmed facts) --- */
