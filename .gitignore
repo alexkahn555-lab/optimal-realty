@@ -1,0 +1,31 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# env — real secrets never committed
+.env
+.env.local
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# os / editor
+.DS_Store
+*.pem
+.idea/
+
+# listing photo raws — originals stay out of git (R-11); only processed assets commit
+/public/listings/**/_raw/
