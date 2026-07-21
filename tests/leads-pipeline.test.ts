@@ -87,7 +87,7 @@ describe('step 1 — parse', () => {
       deps
     );
     expect(res.status).toBe(201);
-    const row = vi.mocked(deps.insertLead).mock.calls[0]?.[0] as Record<
+    const row = vi.mocked(deps.insertLead).mock.calls[0]?.[0] as unknown as Record<
       string,
       unknown
     >;
