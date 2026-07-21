@@ -7,6 +7,7 @@ import { SITE_NAME, TITLE_TEMPLATE } from '@/lib/seo/meta';
 import { entityGraph } from '@/lib/seo/jsonld';
 import { JsonLd } from '@/components/seo';
 import { SiteFooter, SiteHeader } from '@/components/layout';
+import { UTM_SNIPPET } from '@/components/forms/utm';
 import { fontVariables } from '../fonts';
 import '../globals.css';
 
@@ -43,6 +44,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <html lang={locale} className={fontVariables}>
       <body>
+        {/* First-touch UTM capture — <= 0.3 KB, budget-enforced in tests. */}
+        <script dangerouslySetInnerHTML={{ __html: UTM_SNIPPET }} />
         {/* Phase 1: home is the only route, so the locale switch targets home. */}
         <SiteHeader locale={locale} routeId="home" />
         <main id="main-content">{children}</main>

@@ -24,6 +24,11 @@ import type { Localized } from '@/lib/types';
  * "tasación certificada" (certified appraisal) and "administración de asociaciones
  * comunitarias" (community association management) — confirm the client's preferred
  * Spanish terms for the appraiser + CAM credentials before launch.
+ *
+ * Phase 2 flags: `form.consentSms` / `form.consentMarketing` wording needs
+ * attorney/client sign-off (TCPA-adjacent), and `contact.question` /
+ * `contact.answer` (the contact page AnswerBlock, assembled strictly from
+ * confirmed entity facts) need client review in both locales.
  */
 
 export const UI = {
@@ -83,6 +88,69 @@ export const UI = {
       es:
         'Optimal Realty — corretaje inmobiliario, tasación certificada y administración ' +
         'de asociaciones comunitarias en el condado de Miami-Dade, Florida.',
+    },
+  },
+
+  /* ---- Contact page (AnswerBlock from confirmed entity facts — see flags) -- */
+  contact: {
+    question: {
+      en: 'How do I contact Optimal Realty?',
+      es: '¿Cómo puedo contactar a Optimal Realty?',
+    },
+    answer: {
+      en:
+        'Contact Optimal Realty, a Miami-Dade County real estate brokerage founded by ' +
+        'Raul Perez — a Florida licensed real estate broker, certified appraiser, and ' +
+        'community association manager. Use the form on this page in English or ' +
+        'Spanish; your message goes directly to the broker for review and response.',
+      es:
+        'Contacte a Optimal Realty, una firma de corretaje inmobiliario del condado de ' +
+        'Miami-Dade fundada por Raul Perez — corredor de bienes raíces licenciado en ' +
+        'Florida, tasador certificado y administrador de asociaciones comunitarias. Use ' +
+        'el formulario de esta página en inglés o español; su mensaje llega ' +
+        'directamente al corredor para su revisión y respuesta.',
+    },
+  },
+
+  /* ---- Lead form (labels, states, validation — island reads only these) ---- */
+  form: {
+    fullName: { en: 'Full name', es: 'Nombre completo' },
+    email: { en: 'Email', es: 'Correo electrónico' },
+    phone: { en: 'Phone', es: 'Teléfono' },
+    message: { en: 'Message', es: 'Mensaje' },
+    optional: { en: 'Optional', es: 'Opcional' },
+    consentSms: {
+      en:
+        'I agree to receive text messages from Optimal Realty about my inquiry. ' +
+        'Message and data rates may apply.',
+      es:
+        'Acepto recibir mensajes de texto de Optimal Realty sobre mi consulta. ' +
+        'Pueden aplicarse tarifas de mensajes y datos.',
+    },
+    consentMarketing: {
+      en: 'Send me occasional market updates by email.',
+      es: 'Envíenme actualizaciones ocasionales del mercado por correo electrónico.',
+    },
+    hpLabel: { en: 'Leave this field empty', es: 'Deje este campo vacío' },
+    submit: { en: 'Send message', es: 'Enviar mensaje' },
+    sending: { en: 'Sending…', es: 'Enviando…' },
+    successHeading: { en: 'Message sent', es: 'Mensaje enviado' },
+    successBody: {
+      en: 'Thank you — your message has been received.',
+      es: 'Gracias — hemos recibido su mensaje.',
+    },
+    errorBody: {
+      en: 'Something went wrong. Please try again.',
+      es: 'Ocurrió un error. Inténtelo de nuevo.',
+    },
+    requiredError: { en: 'This field is required.', es: 'Este campo es obligatorio.' },
+    emailError: {
+      en: 'Enter a valid email address.',
+      es: 'Ingrese un correo electrónico válido.',
+    },
+    phoneError: {
+      en: 'Enter a valid phone number.',
+      es: 'Ingrese un número de teléfono válido.',
     },
   },
 } satisfies Record<string, Record<string, Localized>>;
