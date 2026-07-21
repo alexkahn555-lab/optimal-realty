@@ -153,4 +153,170 @@ export const UI = {
       es: 'Ingrese un número de teléfono válido.',
     },
   },
+
+  /* ==========================================================================
+   * Phase 3 — calculator + portal chrome. Labels only: broker counsel, method
+   * notes, disclaimers, and FAQ answers are NEVER here — those live in content/
+   * as placeholder markers until the client supplies them.
+   * ========================================================================== */
+
+  /* ---- Calculator field labels (FieldSpec.labelKey resolves here) ---------- */
+  calcField: {
+    salePrice: { en: 'Sale price', es: 'Precio de venta' },
+    county: { en: 'County', es: 'Condado' },
+    propertyClass: { en: 'Property type', es: 'Tipo de propiedad' },
+    mortgagePayoff: { en: 'Mortgage payoff', es: 'Saldo de cancelación de la hipoteca' },
+    secondLienPayoff: {
+      en: 'Second lien payoff',
+      es: 'Cancelación del segundo gravamen',
+    },
+    commissionRatePct: { en: 'Commission rate', es: 'Tasa de comisión' },
+    sellerConcessions: { en: 'Seller concessions', es: 'Concesiones del vendedor' },
+    annualPropertyTax: { en: 'Annual property tax', es: 'Impuesto predial anual' },
+    closingDate: { en: 'Closing date', es: 'Fecha de cierre' },
+    hoaMonthly: {
+      en: 'HOA monthly dues',
+      es: 'Cuota mensual de la asociación',
+    },
+    titlePaidBySeller: {
+      en: "Seller pays the owner's title policy",
+      es: 'El vendedor paga la póliza de título',
+    },
+  },
+
+  /* ---- Calculator enum value labels ---------------------------------------- */
+  calcEnum: {
+    miamiDade: { en: 'Miami-Dade', es: 'Miami-Dade' },
+    otherFl: { en: 'Other Florida county', es: 'Otro condado de Florida' },
+    singleFamily: { en: 'Single-family residence', es: 'Vivienda unifamiliar' },
+    otherClass: { en: 'Condo / townhouse / other', es: 'Condominio / townhouse / otro' },
+  },
+
+  /* ---- Calculator field helper lines --------------------------------------- */
+  calcHelper: {
+    mortgagePayoff: {
+      en: 'Use a payoff quote including per-diem interest.',
+      es: 'Use la cotización de cancelación incluyendo el interés diario.',
+    },
+    annualPropertyTax: {
+      en: 'Optional — enables the tax proration line.',
+      es: 'Opcional — habilita el prorrateo del impuesto.',
+    },
+    hoaMonthly: {
+      en: 'Enables HOA proration and the estoppel fee line.',
+      es: 'Habilita el prorrateo de la asociación y el cargo de estoppel.',
+    },
+    flaggedDefault: {
+      en: 'Unverified default — edit to your numbers.',
+      es: 'Valor predeterminado sin verificar — edítelo con sus cifras.',
+    },
+  },
+
+  /* ---- Ledger line labels (engines return these as LedgerLine.label) ------- */
+  ledger: {
+    gross: { en: 'Sale price (gross)', es: 'Precio de venta (bruto)' },
+    mortgagePayoff: { en: 'Mortgage payoff', es: 'Cancelación de la hipoteca' },
+    secondLienPayoff: {
+      en: 'Second lien payoff',
+      es: 'Cancelación del segundo gravamen',
+    },
+    commission: { en: 'Real estate commission', es: 'Comisión inmobiliaria' },
+    docStamps: {
+      en: 'Documentary stamp tax (deed)',
+      es: 'Impuesto de timbre documental (escritura)',
+    },
+    docStampSurtax: { en: 'Miami-Dade surtax', es: 'Sobretasa de Miami-Dade' },
+    titlePremium: {
+      en: "Owner's title policy",
+      es: 'Póliza de título del propietario',
+    },
+    taxProration: {
+      en: 'Property tax proration (seller credit)',
+      es: 'Prorrateo del impuesto predial (crédito al comprador)',
+    },
+    hoaProration: {
+      en: 'HOA dues proration',
+      es: 'Prorrateo de cuotas de la asociación',
+    },
+    estoppelFee: { en: 'Estoppel letter fee', es: 'Cargo por carta de estoppel' },
+    settlementFee: { en: 'Settlement / closing fee', es: 'Cargo de cierre' },
+    lienSearchFee: {
+      en: 'Municipal lien search',
+      es: 'Búsqueda de gravámenes municipales',
+    },
+    satisfactionRecording: {
+      en: 'Satisfaction recording',
+      es: 'Registro de cancelación de gravamen',
+    },
+    sellerConcessions: { en: 'Seller concessions', es: 'Concesiones del vendedor' },
+    netProceeds: { en: 'Estimated net proceeds', es: 'Ganancia neta estimada' },
+    shortfall: {
+      en: 'Estimated shortfall at closing',
+      es: 'Déficit estimado al cierre',
+    },
+  },
+
+  /* ---- Calculator shell / result panel chrome ------------------------------ */
+  calc: {
+    estimateTag: { en: 'Estimate', es: 'Estimación' },
+    oneTimeHeading: { en: 'One-time costs at closing', es: 'Costos únicos al cierre' },
+    monthlyHeading: { en: 'Monthly', es: 'Mensual' },
+    emailBreakdown: {
+      en: 'Email me this breakdown',
+      es: 'Envíenme este desglose por correo',
+    },
+    methodHeading: { en: 'Method', es: 'Método' },
+    disclaimerHeading: { en: 'Disclaimer', es: 'Aviso legal' },
+    assumptionsHeading: { en: 'Assumptions', es: 'Supuestos' },
+    assumptionsIntro: {
+      en:
+        'Defaults this calculator relies on. Every value is editable in the form; ' +
+        'unverified values are marked with their basis and date.',
+      es:
+        'Valores predeterminados de esta calculadora. Todos son editables en el ' +
+        'formulario; los valores sin verificar están marcados con su base y fecha.',
+    },
+    colAssumption: { en: 'Assumption', es: 'Supuesto' },
+    colValue: { en: 'Value', es: 'Valor' },
+    colBasis: { en: 'Basis', es: 'Base' },
+    colAsOf: { en: 'As of', es: 'Fecha' },
+    colNote: { en: 'Note', es: 'Nota' },
+    basisStatutory: { en: 'Statutory — verify', es: 'Estatutario — por verificar' },
+    basisPromulgatedVerify: {
+      en: 'Promulgated — verify',
+      es: 'Promulgado — por verificar',
+    },
+    basisUnconfirmedDefault: {
+      en: 'Unconfirmed default',
+      es: 'Predeterminado sin confirmar',
+    },
+    basisMarketMustUpdate: {
+      en: 'Market — must update',
+      es: 'Mercado — requiere actualización',
+    },
+    basisInput: { en: 'Your input', es: 'Su dato' },
+  },
+
+  /* ---- Portal / subpage section chrome ------------------------------------- */
+  sections: {
+    faqHeading: { en: 'Frequently asked questions', es: 'Preguntas frecuentes' },
+    relatedTools: { en: 'Related tools', es: 'Herramientas relacionadas' },
+    leadCtaHeading: {
+      en: 'Talk to a licensed broker',
+      es: 'Hable con un corredor licenciado',
+    },
+  },
+
+  /* ---- About page section labels (facts come from config/entity.ts) -------- */
+  about: {
+    education: { en: 'Education', es: 'Formación académica' },
+    militaryService: { en: 'Military service', es: 'Servicio militar' },
+    designations: { en: 'NAR designations', es: 'Designaciones de NAR' },
+    standard: { en: 'Standard of representation', es: 'Estándar de representación' },
+    standardFact: {
+      en: 'Single agency — one client, undivided loyalty, per transaction.',
+      es: 'Agencia única — un cliente y lealtad indivisa por transacción.',
+    },
+    serviceArea: { en: 'Service area', es: 'Área de servicio' },
+  },
 } satisfies Record<string, Record<string, Localized>>;
