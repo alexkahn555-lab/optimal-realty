@@ -10,10 +10,8 @@ const nextConfig = {
     // Listing photos are repo-committed and processed by scripts/compress-images.mjs.
     // No remote patterns: the site serves no third-party or IDX imagery.
   },
-  eslint: {
-    // Lint runs in CI as its own step; do not let it silently pass the build.
-    ignoreDuringBuilds: false,
-  },
+  // ESLint enforcement lives in the prebuild gate chain (npm run lint), not here.
+  // Next 16 removed build-time lint; the `eslint` config key is unsupported.
   typescript: {
     ignoreBuildErrors: false,
   },

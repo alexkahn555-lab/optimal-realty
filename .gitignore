@@ -29,3 +29,5 @@ next-env.d.ts
 
 # listing photo raws — originals stay out of git (R-11); only processed assets commit
 /public/listings/**/_raw/
+test-results/
+playwright-report/
