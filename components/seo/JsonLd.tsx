@@ -1,5 +1,7 @@
 export interface JsonLdProps {
-  graph: Record<string, unknown>;
+  // Any JSON-serializable node/graph: the entity JsonLdGraph, a BreadcrumbList,
+  // or a FAQPage node all satisfy `object`.
+  graph: object;
 }
 
 export function JsonLd({ graph }: JsonLdProps): JSX.Element {
