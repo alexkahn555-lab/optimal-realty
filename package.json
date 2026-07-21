@@ -5,11 +5,11 @@
   "description": "Optimal Realty — bilingual five-portal property platform for Miami-Dade County. Build reference v2.0.",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm run gate:content && npm run gate:bundle:pre",
+    "prebuild": "npm run lint && npm run gate:content && npm run gate:bundle:pre",
     "build": "next build",
     "postbuild": "npm run gate:bundle",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "gate:content": "node scripts/check-content.mjs",
     "gate:content:strict": "CONTENT_STRICT=1 node scripts/check-content.mjs",
@@ -26,10 +26,13 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/parser": "^8.65.0",
     "autoprefixer": "^10.4.19",
+    "eslint": "^9.39.5",
     "postcss": "^8.4.39",
     "sharp": "^0.33.4",
     "tailwindcss": "^3.4.6",
