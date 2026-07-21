@@ -58,17 +58,22 @@ export async function verifyTurnstile(
   const [secret] = requireEnv('TURNSTILE_SECRET');
   const form = new URLSearchParams({ secret, response: token });
   if (ip) form.set('remoteip', ip);
-  const res = await fetch(
-    'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: form,
-    }
-  );
-  if (!res.ok) return false;
-  const data = (await res.json()) as { success?: boolean };
-  return data.success === true;
+  try {
+    const res = await fetch(
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: form,
+      }
+    );
+    if (!res.ok) return false;
+    const data = (await res.json()) as { success?: boolean };
+    return data.success === true;
+  } catch {
+    // Verification unreachable = verification failed (fail closed, never 500).
+    return false;
+  }
 }
 
 /**
