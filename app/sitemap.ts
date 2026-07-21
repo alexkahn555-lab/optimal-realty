@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const locales: Locale[] = ['en', 'es'];
   const routeIds: RouteId[] = [
     'home',
+    'contact',
     ...publishedPortals().map((p) => `portal.${p.id}` as RouteId),
     ...publishedSubpages().map((s) => `subpage.${s.id}` as RouteId),
     ...publishedTools().map((t) => `tool.${t.id}` as RouteId),
