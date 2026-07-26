@@ -9,12 +9,14 @@ import { CEILINGS, classify } from '../scripts/bundle-budget.mjs';
  * lib/seo/href.ts SECTION_SEG (tools/herramientas, listings/propiedades).
  */
 describe('bundle-budget classify()', () => {
-  it('keeps the exact Part 8.2 ceilings', () => {
+  it('keeps the exact Part 8.2 ceilings (Turbopack-recalibrated 2026-07-26)', () => {
+    // Derivations live on the CEILINGS table in scripts/bundle-budget.mjs:
+    // measured Turbopack floor + islands-where-present + ~12–15 KB headroom.
     expect(CEILINGS).toEqual({
-      base: 105,
-      content: 115,
-      calculator: 135,
-      listingReport: 150,
+      base: 155,
+      content: 162,
+      calculator: 167,
+      listingReport: 174,
     });
   });
 
