@@ -87,23 +87,42 @@ describe('leadSubmissionSchema', () => {
       leadSubmissionSchema.safeParse({ ...BASE, sourceSlug: 'anything' })
         .success
     ).toBe(false);
+    // Valid CalcId, but the tool is not published until Phase 5.
+    expect(
+      leadSubmissionSchema.safeParse({
+        ...BASE,
+        sourceType: 'tool',
+        sourceSlug: 'tax-reset',
+      }).success
+    ).toBe(false);
+    expect(
+      leadSubmissionSchema.safeParse({ ...BASE, sourceType: 'booking' }).success
+    ).toBe(false);
+    // Unpublished portal — only sellers is registered in Phase 3.
+    expect(
+      leadSubmissionSchema.safeParse({
+        ...BASE,
+        sourceType: 'portal_cta',
+        portal: 'buyers',
+      }).success
+    ).toBe(false);
+  });
+
+  it('accepts the Phase 3 seller-path sources now published', () => {
     expect(
       leadSubmissionSchema.safeParse({
         ...BASE,
         sourceType: 'tool',
         sourceSlug: 'net-proceeds',
       }).success
-    ).toBe(false);
-    expect(
-      leadSubmissionSchema.safeParse({ ...BASE, sourceType: 'booking' }).success
-    ).toBe(false);
+    ).toBe(true);
     expect(
       leadSubmissionSchema.safeParse({
         ...BASE,
         sourceType: 'portal_cta',
         portal: 'sellers',
       }).success
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('enforces UTM key, count, and value hygiene', () => {

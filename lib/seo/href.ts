@@ -61,12 +61,30 @@ const LEGAL_SEG: Record<'privacy' | 'terms' | 'disclosures' | 'accessibility', L
  * completion report. No tool route renders in Phase 1.
  */
 const TOOL_SLUG: Record<CalcId, LocalizedSeg> = {
-  'net-proceeds': { en: 'net-proceeds', es: 'ganancias-netas' },
+  // ES slug corrected to the Phase 3 dispatch route table ('ganancia-neta',
+  // singular); the Phase 1 judgment slug was 'ganancias-netas'. FLAGGED.
+  'net-proceeds': { en: 'net-proceeds', es: 'ganancia-neta' },
   'tax-reset': { en: 'tax-reset', es: 'reajuste-de-impuestos' },
   'homestead-portability': { en: 'homestead-portability', es: 'portabilidad-de-homestead' },
   'condo-assessment': { en: 'condo-assessment', es: 'derrama-de-condominio' },
   'rental-cashflow': { en: 'rental-cashflow', es: 'flujo-de-caja-de-alquiler' },
   'vacancy-cost': { en: 'vacancy-cost', es: 'costo-de-vacancia' },
+};
+
+/**
+ * Portal subpage segments (Phase 3). Keyed by PortalSubpage.id; the portal
+ * parent supplies the first segment. Content `slug` fields must MATCH this
+ * table (route-table data lives here, per the header rule) — enforced by test.
+ */
+const SUBPAGE_SEG: Record<string, { portal: PortalId; slug: LocalizedSeg }> = {
+  'sellers-home-valuation': {
+    portal: 'sellers',
+    slug: { en: 'home-valuation', es: 'valoracion-de-vivienda' },
+  },
+  'sellers-selling-process': {
+    portal: 'sellers',
+    slug: { en: 'selling-process', es: 'proceso-de-venta' },
+  },
 };
 
 /** Join a base locale path with zero or more already-localized segments. */
@@ -121,10 +139,10 @@ export function href(id: RouteId, locale: Locale): string {
   }
 
   if (id.startsWith('subpage.')) {
-    throw new Error(
-      `href: subpage routes resolve from content (Localized slug + portal parent); ` +
-        `no subpages exist in Phase 1. RouteId: "${id}"`
-    );
+    const sid = id.slice('subpage.'.length);
+    const def = SUBPAGE_SEG[sid];
+    if (!def) throw new Error(`href: unknown subpage "${sid}"`);
+    return path(locale, PORTAL_SEG[def.portal][locale], def.slug[locale]);
   }
 
   // Every RouteId class is handled above; startsWith checks don't narrow the

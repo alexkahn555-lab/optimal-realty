@@ -1,5 +1,6 @@
 import type {
   AnswerBlock,
+  Faq,
   Listing,
   Localized,
   Neighborhood,
@@ -7,6 +8,10 @@ import type {
   PortalSubpage,
   ToolDef,
 } from '@/lib/types';
+import { SELLERS_PORTAL } from '@/content/portals/sellers';
+import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
+import { SELLING_PROCESS_SUBPAGE } from '@/content/subpages/selling-process';
+import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
 
 /**
  * ============================================================================
@@ -31,10 +36,13 @@ import type {
  * changes.
  */
 
-/* ---- Source collections (empty in Phase 1) ------------------------------- */
-const PORTALS: readonly Portal[] = [];
-const SUBPAGES: readonly PortalSubpage[] = [];
-const TOOLS: readonly ToolDef[] = [];
+/* ---- Source collections (Phase 3: seller path registered) ----------------- */
+const PORTALS: readonly Portal[] = [SELLERS_PORTAL];
+const SUBPAGES: readonly PortalSubpage[] = [
+  HOME_VALUATION_SUBPAGE,
+  SELLING_PROCESS_SUBPAGE,
+];
+const TOOLS: readonly ToolDef[] = [NET_PROCEEDS_TOOL];
 const LISTINGS: readonly Listing[] = [];
 const NEIGHBORHOODS: readonly Neighborhood[] = [];
 
@@ -90,6 +98,22 @@ export function publishedTools(): ToolDef[] {
  */
 export function publishedListings(): Listing[] {
   return LISTINGS.filter((l) => l.status !== 'withdrawn');
+}
+
+/**
+ * Resolve a page's faqIds against its co-located FAQ pool, keeping only entries
+ * whose ANSWER is TK-clean in both locales (questions are structural; an
+ * unanswered FAQ simply does not render — the max-8 cap lives in FaqSection).
+ */
+export function resolvedFaqs(
+  pool: readonly Faq[],
+  ids: readonly string[]
+): { question: Localized; answer: Localized }[] {
+  return ids
+    .map((id) => pool.find((faq) => faq.id === id))
+    .filter((faq): faq is Faq => faq !== undefined)
+    .filter((faq) => localizedClean(faq.question) && localizedClean(faq.answer))
+    .map(({ question, answer }) => ({ question, answer }));
 }
 
 export function publishedNeighborhoods(): Neighborhood[] {

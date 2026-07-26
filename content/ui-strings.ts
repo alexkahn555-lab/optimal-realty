@@ -305,6 +305,37 @@ export const UI = {
       en: 'Talk to a licensed broker',
       es: 'Hable con un corredor licenciado',
     },
+    toolRack: { en: 'Decision tools', es: 'Herramientas de decisión' },
+    calculatorTag: { en: 'Calculator', es: 'Calculadora' },
+    decisionHeading: { en: 'The process', es: 'El proceso' },
+    adviceHeading: { en: 'Broker guidance', es: 'Orientación del corredor' },
+    reviewedLabel: { en: 'Reviewed', es: 'Revisado' },
+    featuredListings: { en: 'Featured listings', es: 'Propiedades destacadas' },
+  },
+
+  /* ---- Tools hub (fixed section; AnswerBlock from confirmed facts — FLAG) --- */
+  toolsHub: {
+    question: {
+      en: 'Which real estate calculators does Optimal Realty offer?',
+      es: '¿Qué calculadoras inmobiliarias ofrece Optimal Realty?',
+    },
+    answer: {
+      en:
+        'Optimal Realty publishes free bilingual calculators for Miami-Dade real ' +
+        'estate decisions. The first is the seller net-proceeds calculator, which ' +
+        'itemizes mortgage payoff, commission, Florida documentary stamp taxes, ' +
+        "the Miami-Dade surtax, title, and closing costs behind a sale. More " +
+        "decision tools tied to the broker's appraiser and association-management " +
+        'credentials are in progress.',
+      es:
+        'Optimal Realty publica calculadoras bilingües y gratuitas para ' +
+        'decisiones inmobiliarias en Miami-Dade. La primera es la calculadora de ' +
+        'ganancia neta del vendedor, que detalla la cancelación de la hipoteca, ' +
+        'la comisión, los impuestos de timbre documental de Florida, la sobretasa ' +
+        'de Miami-Dade y los costos de título y cierre de una venta. Hay más ' +
+        'herramientas en preparación, ligadas a las credenciales de tasador y de ' +
+        'administración de asociaciones del corredor.',
+    },
   },
 
   /* ---- About page section labels (facts come from config/entity.ts) -------- */

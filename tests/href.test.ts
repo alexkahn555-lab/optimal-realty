@@ -46,6 +46,23 @@ describe('href()', () => {
     expect(href('listing.123-main-st', 'en')).toBe('/en/listings/123-main-st');
     expect(href('listing.123-main-st', 'es')).toBe('/es/propiedades/123-main-st');
     expect(href('neighborhood.brickell', 'es')).toBe('/es/vecindarios/brickell');
-    expect(href('tool.net-proceeds', 'es')).toBe('/es/herramientas/ganancias-netas');
+    // ES slug per the Phase 3 dispatch route table (was 'ganancias-netas' in P1).
+    expect(href('tool.net-proceeds', 'es')).toBe('/es/herramientas/ganancia-neta');
+  });
+
+  it('portal subpage routes (Phase 3)', () => {
+    expect(href('subpage.sellers-home-valuation', 'en')).toBe(
+      '/en/sellers/home-valuation'
+    );
+    expect(href('subpage.sellers-home-valuation', 'es')).toBe(
+      '/es/vendedores/valoracion-de-vivienda'
+    );
+    expect(href('subpage.sellers-selling-process', 'en')).toBe(
+      '/en/sellers/selling-process'
+    );
+    expect(href('subpage.sellers-selling-process', 'es')).toBe(
+      '/es/vendedores/proceso-de-venta'
+    );
+    expect(() => href('subpage.unknown', 'en')).toThrow();
   });
 });

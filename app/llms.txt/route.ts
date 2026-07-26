@@ -1,16 +1,38 @@
 import { ENTITY, LICENSE_LABEL, POSITIONING } from '@/config/entity';
 import { SITE_ORIGIN } from '@/config/origin';
+import {
+  publishedPortals,
+  publishedSubpages,
+  publishedTools,
+} from '@/lib/content/loaders';
 import { href } from '@/lib/seo/href';
+import type { RouteId } from '@/lib/types';
 
 export const dynamic = 'force-static';
+
+/** One llms.txt line: EN label, EN + ES URLs (labels are en — llms.txt is EN). */
+function line(label: string, id: RouteId): string {
+  return `- ${label}: ${SITE_ORIGIN}${href(id, 'en')} · ${SITE_ORIGIN}${href(id, 'es')}`;
+}
 
 export function GET(): Response {
   const { tradeName, licenses } = ENTITY.entity;
   const licenseLine = licenses
     .map((license) => `${LICENSE_LABEL[license.role]} (${license.number})`)
     .join(', ');
-  const contactLine = `- Contact: ${SITE_ORIGIN}${href('contact', 'en')} · ${SITE_ORIGIN}${href('contact', 'es')}`;
-  const body = `# ${tradeName}\n> ${licenseLine}. ${POSITIONING.serviceArea}.\n\n${contactLine}\n`;
+
+  const lines = [
+    ...publishedPortals().map((p) => line(p.title.en, `portal.${p.id}` as RouteId)),
+    ...publishedSubpages().map((s) => line(s.title.en, `subpage.${s.id}` as RouteId)),
+    line('Tools', 'tools'),
+    ...publishedTools().map((tool) =>
+      line(tool.title.en, `tool.${tool.id}` as RouteId)
+    ),
+    line('About', 'about'),
+    line('Contact', 'contact'),
+  ];
+
+  const body = `# ${tradeName}\n> ${licenseLine}. ${POSITIONING.serviceArea}.\n\n${lines.join('\n')}\n`;
 
   return new Response(body, {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },

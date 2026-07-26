@@ -13,9 +13,13 @@ import type { Locale, RouteId } from '@/lib/types';
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
   const locales: Locale[] = ['en', 'es'];
+  // Legal skeletons stay OUT until their attorney bodies resolve — an all-TK
+  // page is not an indexable surface (same principle as the loaders' TK gate).
   const routeIds: RouteId[] = [
     'home',
     'contact',
+    'about',
+    'tools',
     ...publishedPortals().map((p) => `portal.${p.id}` as RouteId),
     ...publishedSubpages().map((s) => `subpage.${s.id}` as RouteId),
     ...publishedTools().map((t) => `tool.${t.id}` as RouteId),

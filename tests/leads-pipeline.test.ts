@@ -70,9 +70,10 @@ describe('step 1 — parse', () => {
     expect(deps.insertLead).not.toHaveBeenCalled();
   });
 
-  it('rejects an unregistered source (tool slug with empty registry) with 400', async () => {
+  it('rejects an unregistered source (unpublished tool slug) with 400', async () => {
+    // 'tax-reset' is a valid CalcId but no such tool is published (Phase 5).
     const res = await runLeadPipeline(
-      validBody({ sourceType: 'tool', sourceSlug: 'net-proceeds' }),
+      validBody({ sourceType: 'tool', sourceSlug: 'tax-reset' }),
       CTX,
       mockDeps()
     );
