@@ -8,10 +8,16 @@ import type {
   PortalSubpage,
   ToolDef,
 } from '@/lib/types';
-import { SELLERS_PORTAL } from '@/content/portals/sellers';
-import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
-import { SELLING_PROCESS_SUBPAGE } from '@/content/subpages/selling-process';
-import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
+import { SELLERS_FAQS, SELLERS_PORTAL } from '@/content/portals/sellers';
+import {
+  HOME_VALUATION_FAQS,
+  HOME_VALUATION_SUBPAGE,
+} from '@/content/subpages/home-valuation';
+import {
+  SELLING_PROCESS_FAQS,
+  SELLING_PROCESS_SUBPAGE,
+} from '@/content/subpages/selling-process';
+import { NET_PROCEEDS_FAQS, NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
 
 /**
  * ============================================================================
@@ -45,6 +51,14 @@ const SUBPAGES: readonly PortalSubpage[] = [
 const TOOLS: readonly ToolDef[] = [NET_PROCEEDS_TOOL];
 const LISTINGS: readonly Listing[] = [];
 const NEIGHBORHOODS: readonly Neighborhood[] = [];
+
+/** Site-wide FAQ pool (ids are globally unique; enforced by test). */
+export const ALL_FAQS: readonly Faq[] = [
+  ...SELLERS_FAQS,
+  ...HOME_VALUATION_FAQS,
+  ...SELLING_PROCESS_FAQS,
+  ...NET_PROCEEDS_FAQS,
+];
 
 /* ---- TK gate ------------------------------------------------------------- */
 const TK = /\bTK_/;
