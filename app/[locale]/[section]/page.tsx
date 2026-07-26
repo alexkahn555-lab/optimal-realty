@@ -1,24 +1,18 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import type { Locale, Portal } from '@/lib/types';
-import { ENTITY, LICENSE_LABEL } from '@/config/entity';
 import { SITE_ORIGIN } from '@/config/origin';
 import { ABOUT_ANSWER } from '@/content/about';
 import { UI } from '@/content/ui-strings';
 import { isLocale, t } from '@/lib/i18n';
-import {
-  ALL_FAQS,
-  publishedPortals,
-  publishedTools,
-  resolvedFaqs,
-} from '@/lib/content/loaders';
+import { publishedPortals, publishedTools } from '@/lib/content/loaders';
 import { href } from '@/lib/seo/href';
 import { collectionPageNode, pageGraph, profilePageNodes } from '@/lib/seo/jsonld';
 import { metaFor } from '@/lib/seo/meta';
 import { AnswerBlock, Breadcrumbs, JsonLd } from '@/components/seo';
-import { LeadForm } from '@/components/forms';
-import { AboutTemplate, PortalTemplate, ToolRack } from '@/components/portal';
-import { Hairline, Heading, Section } from '@/components/primitives';
+import { AboutTemplate } from '@/components/portal/AboutTemplate';
+import { ToolRack } from '@/components/portal/ToolRack';
+import { Heading, Section } from '@/components/primitives';
 
 /**
  * THE LOCALIZED-SEGMENT ROUTER (single segment). Literal folder names cannot
@@ -28,12 +22,21 @@ import { Hairline, Heading, Section } from '@/components/primitives';
  * extends the SAME router (never per-page forks) with the sellers portal hub,
  * the tools hub, and about. dynamicParams=false 404s everything else at the
  * routing layer. Two-segment routes live in the sibling [sub] router.
+ *
+ * IMPORT-GRAPH DISCIPLINE (Part 8): every [section] URL shares THIS page
+ * module, and Turbopack assigns client chunks per segment — a static import
+ * that reaches a client island ships that island to every URL here, including
+ * the form-less tools hub and about page. So LeadForm-bearing views
+ * (ContactView, PortalView → PortalTemplate → LeadCta) live in sibling
+ * modules imported dynamically per branch, and AboutTemplate/ToolRack are
+ * imported from their concrete files (never the portal barrel, whose graph
+ * reaches LeadForm). Do not add a static import here that reaches a
+ * 'use client' module.
  */
 
 const LOCALES: readonly Locale[] = ['en', 'es'];
 
-/** Answer freshness dates — bump when the answer copy changes. */
-const CONTACT_ANSWER_UPDATED = '2026-07-20' as const;
+/** Answer freshness date — bump when the answer copy changes. */
 const TOOLS_HUB_UPDATED = '2026-07-26' as const;
 
 type SectionMatch =
@@ -114,125 +117,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-const TK = /\bTK_/;
-
-/** Flat TK omission for the JSON-LD nodes below (page-local; entity graph has its own). */
-function withoutTk(node: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(node).filter(
-      ([, value]) => typeof value !== 'string' || !TK.test(value)
-    )
-  );
-}
-
-/** ContactPage + ContactPoint, merged onto the entity graph via the #agent @id. */
-function contactGraph(locale: Locale): object {
-  const url = `${SITE_ORIGIN}${href('contact', locale)}`;
-  const agentId = `${SITE_ORIGIN}/#agent`;
-
-  const page = {
-    '@type': 'ContactPage',
-    '@id': `${url}#contactpage`,
-    url,
-    name: t(UI.contact.question, locale),
-    inLanguage: locale,
-    dateModified: CONTACT_ANSWER_UPDATED,
-    about: { '@id': agentId },
-  };
-
-  const contactPoint = withoutTk({
-    '@type': 'ContactPoint',
-    contactType: 'customer service',
-    availableLanguage: ['en', 'es'],
-    telephone: ENTITY.entity.phone,
-    email: ENTITY.entity.email,
-  });
-
-  return {
-    '@context': 'https://schema.org',
-    '@graph': [page, { '@type': 'RealEstateAgent', '@id': agentId, contactPoint }],
-  };
-}
-
-/* ---- Views ---------------------------------------------------------------- */
-
-function ContactView({ locale }: { locale: Locale }): JSX.Element {
-  const { address } = ENTITY.entity;
-  const addressLine = !TK.test(address.line1)
-    ? [address.line1, address.city, address.state, address.zip]
-        .filter((value) => !TK.test(value))
-        .join(', ')
-    : null;
-
-  return (
-    <Section className="py-16 md:py-24">
-      <div className="space-y-8">
-        <Heading level={1}>{t(UI.contact.question, locale)}</Heading>
-        <AnswerBlock
-          block={{
-            question: UI.contact.question,
-            answer: UI.contact.answer,
-            updated: CONTACT_ANSWER_UPDATED,
-          }}
-          locale={locale}
-        />
-        <Hairline />
-        <div className="grid gap-12 md:grid-cols-[3fr,2fr]">
-          <div className="space-y-8">
-            <LeadForm locale={locale} sourceType="contact" />
-          </div>
-          <div className="space-y-8">
-            <div className="space-y-8">
-              {!TK.test(ENTITY.entity.tradeName) && (
-                <p className="font-display text-lg text-ink">{ENTITY.entity.tradeName}</p>
-              )}
-              <div className="space-y-1 text-ink">
-                {!TK.test(ENTITY.entity.phone) && <p>{ENTITY.entity.phone}</p>}
-                {!TK.test(ENTITY.entity.email) && <p>{ENTITY.entity.email}</p>}
-                {addressLine && <p>{addressLine}</p>}
-              </div>
-            </div>
-            <Hairline />
-            <div className="space-y-1">
-              {ENTITY.entity.licenses.map((license) =>
-                !TK.test(LICENSE_LABEL[license.role]) && !TK.test(license.number) ? (
-                  <div
-                    key={license.role}
-                    className="font-mono text-sm tabular-nums text-ink"
-                  >
-                    {`${LICENSE_LABEL[license.role]} · ${license.number}`}
-                  </div>
-                ) : null
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-      <JsonLd graph={contactGraph(locale)} />
-    </Section>
-  );
-}
-
-function PortalView({
-  portal,
-  locale,
-}: {
-  portal: Portal;
-  locale: Locale;
-}): JSX.Element {
-  const tools = publishedTools().filter((tool) => portal.toolIds.includes(tool.id));
-  const faqs = resolvedFaqs(ALL_FAQS, portal.faqIds);
-
-  return (
-    <PortalTemplate
-      portal={portal}
-      tools={tools}
-      advice={[]} // no AdviceSections exist yet — AdviceList renders null
-      faqs={faqs}
-      locale={locale}
-    />
-  );
-}
+/* ---- Zero-JS views (static imports only — no client reach) ----------------- */
 
 function ToolsHubView({ locale }: { locale: Locale }): JSX.Element {
   const url = `${SITE_ORIGIN}${href('tools', locale)}`;
@@ -289,10 +174,14 @@ export default async function SectionPage({ params }: PageProps): Promise<JSX.El
   if (!match) notFound();
 
   switch (match.kind) {
-    case 'contact':
+    case 'contact': {
+      const { ContactView } = await import('./contact-view');
       return <ContactView locale={locale} />;
-    case 'portal':
+    }
+    case 'portal': {
+      const { PortalView } = await import('./portal-view');
       return <PortalView portal={match.portal} locale={locale} />;
+    }
     case 'tools':
       return <ToolsHubView locale={locale} />;
     case 'about':

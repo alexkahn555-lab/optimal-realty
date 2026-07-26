@@ -1,42 +1,16 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import type {
-  CalcId,
-  LeadIntent,
-  Locale,
-  Portal,
-  PortalSubpage,
-  RouteId,
-  ToolDef,
-} from '@/lib/types';
-import { ASSUMPTIONS } from '@/config/assumptions';
+import type { Locale, Portal, PortalSubpage, RouteId, ToolDef } from '@/lib/types';
 import { LEGAL_PAGES, LEGAL_SLUGS, type LegalPageDef } from '@/content/legal';
-import { HOME_VALUATION_LEAD_INTENT } from '@/content/subpages/home-valuation';
-import { SELLING_PROCESS_LEAD_INTENT } from '@/content/subpages/selling-process';
-import { UI } from '@/content/ui-strings';
 import { isLocale } from '@/lib/i18n';
-import { CALCS, type CalcFormValues } from '@/lib/calc/registry';
-import type { FieldSpec } from '@/lib/calc/types';
 import {
-  ALL_FAQS,
   publishedPortals,
   publishedSubpages,
   publishedTools,
-  resolvedFaqs,
 } from '@/lib/content/loaders';
 import { href } from '@/lib/seo/href';
 import { metaFor } from '@/lib/seo/meta';
-import {
-  AssumptionsTable,
-  CalcIsland,
-  CalcShell,
-} from '@/components/calc';
-import {
-  LegalTemplate,
-  PORTAL_INTENT,
-  SubpageTemplate,
-} from '@/components/portal';
-import type { Crumb } from '@/components/seo';
+import { LegalTemplate } from '@/components/portal/LegalTemplate';
 
 /**
  * THE LOCALIZED-SEGMENT ROUTER (two segments) — the sibling of [section] for
@@ -44,6 +18,15 @@ import type { Crumb } from '@/components/seo';
  * (/es/herramientas/ganancia-neta), and legal children (/es/legal/privacidad).
  * Same registry discipline: href() is the single source of truth, the URL
  * either matches a registered route exactly or 404s (dynamicParams=false).
+ *
+ * IMPORT-GRAPH DISCIPLINE (Part 8): every [sub] URL shares THIS page module,
+ * and Turbopack assigns client chunks per segment — a static import that
+ * reaches a client island ships that island to every URL here, including
+ * legal pages that must ship zero JS. So island-bearing views (ToolView →
+ * CalcIsland, SubpageView → LeadForm) live in sibling modules imported
+ * dynamically per branch, and LegalTemplate is imported from its concrete
+ * file (never the portal barrel, whose graph reaches LeadForm). Do not add a
+ * static import here that reaches a 'use client' module.
  */
 
 const LOCALES: readonly Locale[] = ['en', 'es'];
@@ -141,137 +124,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-/* ---- Subpage wiring -------------------------------------------------------- */
-
-/** Structural CTA intent per subpage; falls back to the portal's intent. */
-const SUBPAGE_INTENT: Record<string, LeadIntent> = {
-  'sellers-home-valuation': HOME_VALUATION_LEAD_INTENT,
-  'sellers-selling-process': SELLING_PROCESS_LEAD_INTENT,
-};
-
-function SubpageView({
-  subpage,
-  portal,
-  locale,
-}: {
-  subpage: PortalSubpage;
-  portal: Portal;
-  locale: Locale;
-}): JSX.Element {
-  const tools = publishedTools().filter((tool) =>
-    subpage.relatedToolIds.includes(tool.id)
-  );
-  // FAQPage rule (Part 4.2): only ids NOT already on the portal hub.
-  const faqs = resolvedFaqs(
-    ALL_FAQS,
-    subpage.faqIds.filter((id) => !portal.faqIds.includes(id))
-  );
-
-  return (
-    <SubpageTemplate
-      subpage={subpage}
-      portal={portal}
-      tools={tools}
-      advice={[]} // no AdviceSections exist yet — AdviceList renders null
-      faqs={faqs}
-      locale={locale}
-      leadIntent={SUBPAGE_INTENT[subpage.id] ?? PORTAL_INTENT[portal.id]}
-    />
-  );
-}
-
-/* ---- Tool (calculator) wiring ---------------------------------------------- */
-
-/** Structural CTA intent per calculator (closed CalcId set). */
-const TOOL_INTENT: Record<CalcId, LeadIntent> = {
-  'net-proceeds': 'sell',
-  'tax-reset': 'buy',
-  'homestead-portability': 'sell',
-  'condo-assessment': 'buy',
-  'rental-cashflow': 'invest',
-  'vacancy-cost': 'lease-out',
-};
-
-/** Fixed probe date — compute() is pure; dates enter as inputs (never a clock). */
-const PROBE_DATE = '2026-01-15';
-
-/** Server-resolved island defaults: assumption-backed values substituted. */
-function fieldDefaults(fields: FieldSpec[]): CalcFormValues {
-  const defaults: CalcFormValues = {};
-  for (const field of fields) {
-    if (field.defaultFromAssumption !== undefined) {
-      const assumption = ASSUMPTIONS[field.defaultFromAssumption];
-      if (assumption !== undefined) {
-        defaults[field.key] =
-          field.kind === 'boolean' ? assumption.value === 1 : assumption.value;
-      }
-    } else if (field.default !== undefined) {
-      defaults[field.key] = field.default;
-    }
-  }
-  return defaults;
-}
-
-/**
- * A minimal valid input for the default-state compute: defaults plus each
- * still-missing required field at its lower bound (dates at the fixed probe).
- * Used ONLY to surface assumptionKeysUsed for the server-rendered table.
- */
-function probeValues(fields: FieldSpec[], defaults: CalcFormValues): CalcFormValues {
-  const probe: CalcFormValues = { ...defaults };
-  for (const field of fields) {
-    if (probe[field.key] !== undefined) continue;
-    if (field.kind === 'date') probe[field.key] = PROBE_DATE;
-    else if (field.kind === 'enum') probe[field.key] = field.enumValues?.[0] ?? '';
-    else if (field.kind === 'boolean') probe[field.key] = false;
-    else probe[field.key] = field.min ?? 0;
-  }
-  return probe;
-}
-
-function ToolView({ tool, locale }: { tool: ToolDef; locale: Locale }): JSX.Element {
-  const calc = CALCS[tool.engineId];
-  // A published ToolDef without a registered engine is an authoring error.
-  if (!calc) notFound();
-
-  const fields = calc.engine.fields;
-  const defaults = fieldDefaults(fields);
-  const probe = calc.clampCrossField
-    ? calc.clampCrossField(probeValues(fields, defaults))
-    : probeValues(fields, defaults);
-  const assumptionKeys = calc.engine.compute(
-    calc.toInput(probe),
-    ASSUMPTIONS
-  ).assumptionKeysUsed;
-
-  const crumbs: Crumb[] = [
-    { id: 'home', label: UI.breadcrumb.home },
-    { id: 'tools', label: UI.nav.tools },
-    { id: `tool.${tool.id}`, label: tool.title },
-  ];
-
-  return (
-    <CalcShell
-      tool={tool}
-      locale={locale}
-      crumbs={crumbs}
-      faqs={resolvedFaqs(ALL_FAQS, tool.faqIds)}
-    >
-      <CalcIsland
-        engineId={tool.engineId}
-        locale={locale}
-        sourceSlug={tool.id}
-        leadIntent={TOOL_INTENT[tool.id]}
-        fields={fields}
-        defaults={defaults}
-      />
-      <AssumptionsTable keys={assumptionKeys} locale={locale} />
-    </CalcShell>
-  );
-}
-
-/* ---- Page ------------------------------------------------------------------ */
-
 export default async function SubPage({ params }: PageProps): Promise<JSX.Element> {
   const { locale, section, sub } = await params;
   if (!isLocale(locale)) notFound();
@@ -279,7 +131,8 @@ export default async function SubPage({ params }: PageProps): Promise<JSX.Elemen
   if (!match) notFound();
 
   switch (match.kind) {
-    case 'subpage':
+    case 'subpage': {
+      const { SubpageView } = await import('./subpage-view');
       return (
         <SubpageView
           subpage={match.subpage}
@@ -287,8 +140,11 @@ export default async function SubPage({ params }: PageProps): Promise<JSX.Elemen
           locale={locale}
         />
       );
-    case 'tool':
+    }
+    case 'tool': {
+      const { ToolView } = await import('./tool-view');
       return <ToolView tool={match.tool} locale={locale} />;
+    }
     case 'legal':
       return <LegalTemplate page={match.page} locale={locale} />;
   }
