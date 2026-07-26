@@ -26,6 +26,8 @@ export interface LeadFormProps {
   sourceSlug?: string;
   portal?: PortalId;
   intent?: LeadIntent;
+  /** Calculator inputs + outputs snapshot (LeadSubmission.payload). */
+  payload?: Record<string, unknown>;
 }
 
 const inputClasses =
@@ -90,6 +92,7 @@ export function LeadForm(props: LeadFormProps): JSX.Element {
       email,
       ...(phone ? { phone } : {}),
       ...(message ? { message } : {}),
+      ...(props.payload === undefined ? {} : { payload: props.payload }),
       ...(utm === undefined ? {} : { utm }),
       consentSms: data.get('consentSms') !== null,
       consentMarketing: data.get('consentMarketing') !== null,

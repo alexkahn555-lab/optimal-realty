@@ -419,6 +419,28 @@ export const NET_PROCEEDS_ENGINE: CalcEngine<NetProceedsInput, NetProceedsResult
 };
 
 /**
+ * Cross-field bounds from the reference input table that FieldSpec cannot
+ * express statically: payoff <= 1.5 x price, second lien <= price,
+ * concessions <= 0.10 x price. Pure; applied by the island before compute.
+ */
+export function clampInputs(
+  values: Record<string, number | string | boolean>
+): Record<string, number | string | boolean> {
+  const price = Number(values.salePrice ?? 0);
+  if (!Number.isFinite(price) || price <= 0) return values;
+  const cap = (key: string, max: number) => {
+    const v = Number(values[key] ?? 0);
+    return Number.isFinite(v) ? Math.min(v, max) : 0;
+  };
+  return {
+    ...values,
+    mortgagePayoff: cap('mortgagePayoff', 1.5 * price),
+    secondLienPayoff: cap('secondLienPayoff', price),
+    sellerConcessions: cap('sellerConcessions', 0.1 * price),
+  };
+}
+
+/**
  * Form values (display units: dollars / ISO date / enum strings / booleans) →
  * engine input (integer cents). The single conversion point at the engine
  * boundary; pure, shared by island and server.

@@ -1,5 +1,5 @@
-import type { Locale } from '@/lib/types';
-import { ENTITY, LICENSE_LABEL } from '@/config/entity';
+import type { Locale, Localized, Portal, PortalSubpage, ToolDef } from '@/lib/types';
+import { ENTITY, LICENSE_LABEL, POSITIONING } from '@/config/entity';
 import { SITE_ORIGIN } from '@/config/origin';
 
 /**
@@ -122,4 +122,138 @@ export function entityGraph(locale: Locale): JsonLdGraph {
 
   // Personal hard rule: strip every TK_ before the graph can be serialized.
   return stripTK(graph) as JsonLdGraph;
+}
+
+/* ==========================================================================
+ * Phase 3 — per-route-class node builders (Part 4.2). Every node REFERENCES
+ * #agent / #raul by @id and never redeclares them; every builder passes
+ * through pageGraph() so a TK_ marker cannot leak into a <script> tag.
+ * Builders take the absolute page URL — href() stays the caller's concern.
+ * ========================================================================== */
+
+const AGENT_ID = `${SITE_ORIGIN}/#agent`;
+const RAUL_ID = `${SITE_ORIGIN}/#raul`;
+
+/** Wrap page nodes in a @graph with the TK strip applied. */
+export function pageGraph(nodes: Record<string, unknown>[]): JsonLdGraph {
+  return stripTK({ '@context': 'https://schema.org', '@graph': nodes }) as JsonLdGraph;
+}
+
+/** Portal hub: each portal is literally one service offering (provider → #agent). */
+export function serviceNode(
+  portal: Portal,
+  url: string,
+  locale: Locale
+): Record<string, unknown> {
+  return {
+    '@type': 'Service',
+    '@id': `${url}#service`,
+    serviceType: portal.serviceSchema.serviceType,
+    name: portal.title[locale],
+    description: portal.answer.answer[locale],
+    url,
+    inLanguage: locale,
+    provider: { '@id': AGENT_ID },
+    areaServed: { '@type': 'AdministrativeArea', name: 'Miami-Dade County' },
+  };
+}
+
+/** Portal subpage: Article, author → #raul, dateModified from the answer. */
+export function articleNode(
+  subpage: PortalSubpage,
+  url: string,
+  locale: Locale
+): Record<string, unknown> {
+  return {
+    '@type': 'Article',
+    '@id': `${url}#article`,
+    headline: subpage.title[locale],
+    description: subpage.answer.answer[locale],
+    url,
+    inLanguage: locale,
+    author: { '@id': RAUL_ID },
+    publisher: { '@id': AGENT_ID },
+    dateModified: subpage.answer.updated,
+    mainEntityOfPage: url,
+  };
+}
+
+/** Calculator page: calculators are applications, not articles. */
+export function webApplicationNode(
+  tool: ToolDef,
+  url: string,
+  locale: Locale
+): Record<string, unknown> {
+  return {
+    '@type': 'WebApplication',
+    '@id': `${url}#app`,
+    name: tool.title[locale],
+    description: tool.answer.answer[locale],
+    url,
+    inLanguage: locale,
+    applicationCategory: 'FinanceApplication',
+    operatingSystem: 'Web',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    provider: { '@id': AGENT_ID },
+  };
+}
+
+/** Index routes (tools hub, later listings/neighborhood indexes). */
+export function collectionPageNode(
+  name: Localized,
+  description: Localized,
+  url: string,
+  locale: Locale
+): Record<string, unknown> {
+  return {
+    '@type': 'CollectionPage',
+    '@id': `${url}#collection`,
+    name: name[locale],
+    description: description[locale],
+    url,
+    inLanguage: locale,
+    isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+  };
+}
+
+/**
+ * About: ProfilePage + the Person E-E-A-T payload. The Person node EXTENDS the
+ * site-wide #raul by @id (same merge pattern the contact page set for #agent)
+ * with confirmed facts only — FSU economics, USMC service, NAR membership.
+ * The individual NAR designation list is TK (D-03) and therefore absent.
+ */
+export function profilePageNodes(url: string, locale: Locale): Record<string, unknown>[] {
+  return [
+    {
+      '@type': 'ProfilePage',
+      '@id': `${url}#profile`,
+      url,
+      inLanguage: locale,
+      mainEntity: { '@id': RAUL_ID },
+      about: { '@id': AGENT_ID },
+    },
+    {
+      '@type': 'Person',
+      '@id': RAUL_ID,
+      name: ENTITY.entity.founder.name,
+      jobTitle: LICENSE_LABEL.broker,
+      worksFor: { '@id': AGENT_ID },
+      alumniOf: {
+        '@type': 'CollegeOrUniversity',
+        name: 'Florida State University',
+      },
+      memberOf: {
+        '@type': 'Organization',
+        name: 'National Association of REALTORS',
+      },
+      hasOccupation: {
+        '@type': 'Occupation',
+        name: LICENSE_LABEL.broker,
+        occupationLocation: {
+          '@type': 'AdministrativeArea',
+          name: POSITIONING.serviceArea,
+        },
+      },
+    },
+  ];
 }
