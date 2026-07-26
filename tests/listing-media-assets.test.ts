@@ -49,8 +49,9 @@ describe('committed listing media', () => {
   });
 
   it('strips EXIF (incl. GPS) from outputs — and the raws prove it', async () => {
-    // The raw drops carry fake EXIF+GPS on purpose; if this ever fails, the
-    // strip assertion below has gone vacuous and the pipeline test is blind.
+    // The raw drops carry fake EXIF+GPS on purpose so the strip assertion is
+    // proven against a real difference. Raws are gitignored by design (R-11:
+    // originals never commit), so this leg only runs where a raw exists.
     const rawPath = join(
       ROOT,
       'public',
@@ -59,8 +60,10 @@ describe('committed listing media', () => {
       '_raw',
       'hero-01.jpg'
     );
-    const raw = await sharp(rawPath).metadata();
-    expect(raw.exif, 'raw fixture should carry EXIF').toBeDefined();
+    if (existsSync(rawPath)) {
+      const raw = await sharp(rawPath).metadata();
+      expect(raw.exif, 'raw fixture should carry EXIF').toBeDefined();
+    }
 
     for (const asset of ASSETS) {
       const jpegPath = join(ROOT, 'public', asset.src);
