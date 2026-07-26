@@ -6,6 +6,7 @@ import { ABOUT_ANSWER } from '@/content/about';
 import { UI } from '@/content/ui-strings';
 import { isLocale, t } from '@/lib/i18n';
 import { publishedPortals, publishedTools } from '@/lib/content/loaders';
+import { LISTING_UI } from '@/components/listing/strings';
 import { href } from '@/lib/seo/href';
 import { collectionPageNode, pageGraph, profilePageNodes } from '@/lib/seo/jsonld';
 import { metaFor } from '@/lib/seo/meta';
@@ -43,7 +44,8 @@ type SectionMatch =
   | { kind: 'contact' }
   | { kind: 'portal'; portal: Portal }
   | { kind: 'tools' }
-  | { kind: 'about' };
+  | { kind: 'about' }
+  | { kind: 'listings' };
 
 /** Registry-driven resolution: the URL either IS a registered route or 404s. */
 function resolveSection(locale: Locale, section: string): SectionMatch | null {
@@ -51,6 +53,7 @@ function resolveSection(locale: Locale, section: string): SectionMatch | null {
   if (pathname === href('contact', locale)) return { kind: 'contact' };
   if (pathname === href('tools', locale)) return { kind: 'tools' };
   if (pathname === href('about', locale)) return { kind: 'about' };
+  if (pathname === href('listings', locale)) return { kind: 'listings' };
   for (const portal of publishedPortals()) {
     if (pathname === href(`portal.${portal.id}`, locale)) {
       return { kind: 'portal', portal };
@@ -72,6 +75,7 @@ export function generateStaticParams(): { locale: Locale; section: string }[] {
     { locale, section: lastSegment(href('contact', locale)) },
     { locale, section: lastSegment(href('tools', locale)) },
     { locale, section: lastSegment(href('about', locale)) },
+    { locale, section: lastSegment(href('listings', locale)) },
     ...publishedPortals().map((portal) => ({
       locale,
       section: lastSegment(href(`portal.${portal.id}`, locale)),
@@ -112,6 +116,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     case 'about':
       return metaFor(
         { id: 'about', title: UI.nav.about, description: ABOUT_ANSWER.answer },
+        locale
+      );
+    case 'listings':
+      return metaFor(
+        { id: 'listings', title: UI.nav.listings, description: LISTING_UI.index.intro },
         locale
       );
   }
@@ -186,5 +195,11 @@ export default async function SectionPage({ params }: PageProps): Promise<JSX.El
       return <ToolsHubView locale={locale} />;
     case 'about':
       return <AboutView locale={locale} />;
+    case 'listings': {
+      // next/image reaches the client graph — dynamic per-branch like the
+      // form-bearing views, so the chunk never rides into other sections.
+      const { ListingsIndexView } = await import('./listings-index-view');
+      return <ListingsIndexView locale={locale} />;
+    }
   }
 }

@@ -40,8 +40,16 @@ describe('PortalTemplate', () => {
 
   it('empty slots render null — no orphan headings', () => {
     expect(markup).not.toContain(UI.sections.adviceHeading.en);
-    expect(markup).not.toContain(UI.sections.featuredListings.en);
     expect(markup).not.toContain(UI.sections.faqHeading.en);
+  });
+
+  it('featured listings lit up when Phase 4a registered active listings', () => {
+    // Phase 1–3 this slot rendered null; the fixtures now populate it with
+    // links into the listing reports (RelatedListings untouched, as designed).
+    expect(markup).toContain(UI.sections.featuredListings.en);
+    expect(markup).toContain(
+      'href="/en/listings/100-fixture-boulevard-coral-gables"'
+    );
   });
 
   it('Service JSON-LD references #agent and never redeclares it', () => {
@@ -60,6 +68,7 @@ describe('SubpageTemplate', () => {
       advice={[]}
       faqs={[]}
       locale="es"
+      leadIntent="valuation"
     />
   );
 

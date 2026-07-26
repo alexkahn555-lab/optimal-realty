@@ -1,11 +1,13 @@
 import { ENTITY, LICENSE_LABEL, POSITIONING } from '@/config/entity';
 import { SITE_ORIGIN } from '@/config/origin';
 import {
+  activeListings,
   publishedPortals,
   publishedSubpages,
   publishedTools,
 } from '@/lib/content/loaders';
 import { href } from '@/lib/seo/href';
+import { displayAddress } from '@/components/listing/helpers';
 import type { RouteId } from '@/lib/types';
 
 export const dynamic = 'force-static';
@@ -27,6 +29,11 @@ export function GET(): Response {
     line('Tools', 'tools'),
     ...publishedTools().map((tool) =>
       line(tool.title.en, `tool.${tool.id}` as RouteId)
+    ),
+    line('Listings', 'listings'),
+    // Marketed listings only; labels run through the privacy degradation.
+    ...activeListings().map((listing) =>
+      line(displayAddress(listing).heading, `listing.${listing.slug}` as RouteId)
     ),
     line('About', 'about'),
     line('Contact', 'contact'),

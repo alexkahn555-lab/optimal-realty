@@ -8,6 +8,8 @@ import type {
   PortalSubpage,
   ToolDef,
 } from '@/lib/types';
+import { LISTING_L_2026_001 } from '@/content/listings/l-2026-001';
+import { LISTING_L_2026_002 } from '@/content/listings/l-2026-002';
 import { SELLERS_FAQS, SELLERS_PORTAL } from '@/content/portals/sellers';
 import {
   HOME_VALUATION_FAQS,
@@ -42,14 +44,16 @@ import { NET_PROCEEDS_FAQS, NET_PROCEEDS_TOOL } from '@/content/tools/net-procee
  * changes.
  */
 
-/* ---- Source collections (Phase 3: seller path registered) ----------------- */
+/* ---- Source collections (Phase 3: seller path · Phase 4a: listings) ------- */
 const PORTALS: readonly Portal[] = [SELLERS_PORTAL];
 const SUBPAGES: readonly PortalSubpage[] = [
   HOME_VALUATION_SUBPAGE,
   SELLING_PROCESS_SUBPAGE,
 ];
 const TOOLS: readonly ToolDef[] = [NET_PROCEEDS_TOOL];
-const LISTINGS: readonly Listing[] = [];
+// Phase 4a: two realistic-but-invented fixtures (the test surface). Real
+// listings later replace the fixture files with same-shape data files.
+const LISTINGS: readonly Listing[] = [LISTING_L_2026_001, LISTING_L_2026_002];
 const NEIGHBORHOODS: readonly Neighborhood[] = [];
 
 /** Site-wide FAQ pool (ids are globally unique; enforced by test). */
@@ -63,8 +67,12 @@ export const ALL_FAQS: readonly Faq[] = [
 /* ---- TK gate ------------------------------------------------------------- */
 const TK = /\bTK_/;
 
-/** A Localized value is clean when NEITHER locale carries a TK_ marker. */
-function localizedClean(value: Localized): boolean {
+/**
+ * A Localized value is clean when NEITHER locale carries a TK_ marker.
+ * Exported so degrading modules (listing report) apply the SAME predicate the
+ * publish gate uses — one definition of "unfilled" everywhere.
+ */
+export function localizedClean(value: Localized): boolean {
   return !TK.test(value.en) && !TK.test(value.es);
 }
 
@@ -106,12 +114,60 @@ export function publishedTools(): ToolDef[] {
 }
 
 /**
- * A listing is visible when it is not a draft-equivalent state. Listings carry no
- * AnswerBlock; a TK narrative degrades to a visible placeholder in preview and does
- * not gate the URL. `withdrawn` listings are removed from public routing.
+ * Listing data-integrity validation (Part 8.3 / D2): media[0] MUST be the hero
+ * and every asset MUST carry explicit positive w/h (CLS-proof) and a
+ * /listings/-rooted src. A malformed listing is an authoring error that fails
+ * the BUILD (publishedListings runs on every routed surface), never a listing
+ * that silently drops out.
  */
+export function validateListingMedia(listing: Listing): void {
+  if (listing.media.length === 0) {
+    throw new Error(`listing ${listing.id}: media must not be empty`);
+  }
+  if (listing.media[0]?.role !== 'hero') {
+    throw new Error(`listing ${listing.id}: media[0].role must be 'hero'`);
+  }
+  for (const asset of listing.media) {
+    if (!Number.isInteger(asset.w) || asset.w <= 0 || !Number.isInteger(asset.h) || asset.h <= 0) {
+      throw new Error(
+        `listing ${listing.id}: media asset ${asset.src} needs explicit positive integer w/h`
+      );
+    }
+    if (!asset.src.startsWith('/listings/')) {
+      throw new Error(`listing ${listing.id}: media src must live under /listings/`);
+    }
+  }
+}
+
+/**
+ * Listing publish gate (D3 semantics adapted to listings, which carry no
+ * AnswerBlock): visible only when the INDEXABLE surface — the auto-templated
+ * `summary` and every media alt — is TK-clean in both locales and the status
+ * is not `withdrawn`. A TK `narrative` degrades to a visible placeholder in
+ * preview and never gates the URL (client copy never blocks a route).
+ */
+export function isPublishedListing(listing: Listing): boolean {
+  return (
+    listing.status !== 'withdrawn' &&
+    localizedClean(listing.summary) &&
+    listing.media.every((asset) => localizedClean(asset.alt))
+  );
+}
+
 export function publishedListings(): Listing[] {
-  return LISTINGS.filter((l) => l.status !== 'withdrawn');
+  for (const listing of LISTINGS) validateListingMedia(listing);
+  return LISTINGS.filter(isPublishedListing);
+}
+
+/**
+ * Currently-marketed listings — the inventory the index, report routes,
+ * sitemap, and llms.txt surface this phase. The sold archive (`sold`/`leased`)
+ * is a Phase 4b view; until it exists, sold listings publish nowhere.
+ */
+export function activeListings(): Listing[] {
+  return publishedListings().filter(
+    (l) => l.status === 'active' || l.status === 'coming-soon' || l.status === 'pending'
+  );
 }
 
 /**

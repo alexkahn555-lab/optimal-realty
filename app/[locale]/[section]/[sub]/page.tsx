@@ -1,15 +1,24 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import type { Locale, Portal, PortalSubpage, RouteId, ToolDef } from '@/lib/types';
+import type {
+  Listing,
+  Locale,
+  Portal,
+  PortalSubpage,
+  RouteId,
+  ToolDef,
+} from '@/lib/types';
 import { LEGAL_PAGES, LEGAL_SLUGS, type LegalPageDef } from '@/content/legal';
 import { isLocale } from '@/lib/i18n';
 import {
+  activeListings,
   publishedPortals,
   publishedSubpages,
   publishedTools,
 } from '@/lib/content/loaders';
 import { href } from '@/lib/seo/href';
 import { metaFor } from '@/lib/seo/meta';
+import { displayAddress } from '@/components/listing/helpers';
 import { LegalTemplate } from '@/components/portal/LegalTemplate';
 
 /**
@@ -34,7 +43,8 @@ const LOCALES: readonly Locale[] = ['en', 'es'];
 type SubMatch =
   | { kind: 'subpage'; subpage: PortalSubpage; portal: Portal }
   | { kind: 'tool'; tool: ToolDef }
-  | { kind: 'legal'; page: LegalPageDef };
+  | { kind: 'legal'; page: LegalPageDef }
+  | { kind: 'listing'; listing: Listing };
 
 function resolveSub(locale: Locale, section: string, sub: string): SubMatch | null {
   const pathname = `/${locale}/${section}/${sub}`;
@@ -50,6 +60,13 @@ function resolveSub(locale: Locale, section: string, sub: string): SubMatch | nu
   for (const slug of LEGAL_SLUGS) {
     if (href(`legal.${slug}`, locale) === pathname) {
       return { kind: 'legal', page: LEGAL_PAGES[slug] };
+    }
+  }
+  // Marketed listings only — the sold archive is a Phase 4b route (its view
+  // does not exist yet, so sold/leased listings resolve nowhere).
+  for (const listing of activeListings()) {
+    if (href(`listing.${listing.slug}`, locale) === pathname) {
+      return { kind: 'listing', listing };
     }
   }
   return null;
@@ -74,6 +91,9 @@ export function generateStaticParams(): {
     ...publishedSubpages().map((s) => routeParams(locale, `subpage.${s.id}`)),
     ...publishedTools().map((tool) => routeParams(locale, `tool.${tool.id}`)),
     ...LEGAL_SLUGS.map((slug) => routeParams(locale, `legal.${slug}`)),
+    ...activeListings().map((listing) =>
+      routeParams(locale, `listing.${listing.slug}`)
+    ),
   ]);
 }
 
@@ -121,6 +141,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ),
         robots: { index: false, follow: true },
       };
+    case 'listing': {
+      // Title = the privacy-degraded address heading (locale-invariant);
+      // description = the auto-templated summary (TK-gated at publish).
+      const heading = displayAddress(match.listing).heading;
+      return metaFor(
+        {
+          id: `listing.${match.listing.slug}`,
+          title: { en: heading, es: heading },
+          description: match.listing.summary,
+        },
+        locale
+      );
+    }
   }
 }
 
@@ -147,5 +180,9 @@ export default async function SubPage({ params }: PageProps): Promise<JSX.Elemen
     }
     case 'legal':
       return <LegalTemplate page={match.page} locale={locale} />;
+    case 'listing': {
+      const { ListingReportView } = await import('./listing-report-view');
+      return <ListingReportView listing={match.listing} locale={locale} />;
+    }
   }
 }

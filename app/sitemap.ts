@@ -2,10 +2,10 @@ import type { MetadataRoute } from 'next';
 import { SITE_ORIGIN } from '@/config/origin';
 import { href } from '@/lib/seo/href';
 import {
+  activeListings,
   publishedPortals,
   publishedSubpages,
   publishedTools,
-  publishedListings,
   publishedNeighborhoods,
 } from '@/lib/content/loaders';
 import type { Locale, RouteId } from '@/lib/types';
@@ -20,10 +20,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     'contact',
     'about',
     'tools',
+    'listings',
     ...publishedPortals().map((p) => `portal.${p.id}` as RouteId),
     ...publishedSubpages().map((s) => `subpage.${s.id}` as RouteId),
     ...publishedTools().map((t) => `tool.${t.id}` as RouteId),
-    ...publishedListings().map((l) => `listing.${l.slug}` as RouteId),
+    // Marketed listings only — the sitemap must mirror the routes that exist,
+    // and the sold archive is Phase 4b.
+    ...activeListings().map((l) => `listing.${l.slug}` as RouteId),
     ...publishedNeighborhoods().map(
       (n) => `neighborhood.${n.slug}` as RouteId,
     ),

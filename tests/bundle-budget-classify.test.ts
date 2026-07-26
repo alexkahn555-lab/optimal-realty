@@ -64,6 +64,22 @@ describe('bundle-budget classify()', () => {
     ).toBe('listingReport');
   });
 
+  it('weighs the Phase 4a fixture reports as listingReport, the index as content', () => {
+    for (const slug of [
+      '100-fixture-boulevard-coral-gables',
+      'fixture-condo-miami-33131',
+    ]) {
+      expect(classify(`/en/listings/${slug}`, '/[locale]/[section]/[sub]')).toBe(
+        'listingReport'
+      );
+      expect(
+        classify(`/es/propiedades/${slug}`, '/[locale]/[section]/[sub]')
+      ).toBe('listingReport');
+    }
+    expect(classify('/en/listings', '/[locale]/[section]')).toBe('content');
+    expect(classify('/es/propiedades', '/[locale]/[section]')).toBe('content');
+  });
+
   it('skips framework error shells (no Part 8 class)', () => {
     expect(classify('/_not-found', '/_not-found')).toBeNull();
     expect(classify('/_global-error', '/_global-error')).toBeNull();

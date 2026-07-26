@@ -1,6 +1,15 @@
-import type { Locale, Localized, Portal, PortalSubpage, ToolDef } from '@/lib/types';
+import type {
+  Listing,
+  Locale,
+  Localized,
+  Portal,
+  PortalSubpage,
+  PropertyClass,
+  ToolDef,
+} from '@/lib/types';
 import { ENTITY, LICENSE_LABEL, POSITIONING } from '@/config/entity';
 import { SITE_ORIGIN } from '@/config/origin';
+import { displayAddress } from '@/components/listing/helpers';
 
 /**
  * ============================================================================
@@ -256,4 +265,126 @@ export function profilePageNodes(url: string, locale: Locale): Record<string, un
       },
     },
   ];
+}
+
+/* ==========================================================================
+ * Phase 4a — listing builders (Part 7.3 / D4). Same discipline as above:
+ * every node REFERENCES #agent by @id and never redeclares it; callers pass
+ * absolute URLs and wrap through pageGraph() (TK strip). BreadcrumbList is
+ * emitted by the Breadcrumbs component, never duplicated here.
+ * ========================================================================== */
+
+/**
+ * schema.org dwelling subtype per PropertyClass. Only marketed residential
+ * classes have a precise subtype; land/commercial fall back to Place (no
+ * dwelling props are emitted for them that would be wrong — the builder only
+ * attaches beds/baths/floorSize when the facts carry them).
+ */
+const DWELLING_TYPE: Record<PropertyClass, string> = {
+  'single-family': 'SingleFamilyResidence',
+  condo: 'Apartment',
+  townhouse: 'House',
+  'multi-family': 'ApartmentComplex',
+  land: 'Place',
+  commercial: 'Place',
+};
+
+/**
+ * PostalAddress for a listing, DEGRADED per the showFullAddress privacy flag:
+ * street line (and unit) only when the listing shows its address; otherwise
+ * city/region/zip only. GeoCoordinates follow the same flag in the listing
+ * node — a precise pin would defeat address privacy.
+ */
+export function listingPostalAddressNode(listing: Listing): Record<string, unknown> {
+  const base: Record<string, unknown> = {
+    '@type': 'PostalAddress',
+    addressLocality: listing.address.city,
+    addressRegion: listing.address.state,
+    postalCode: listing.address.zip,
+    addressCountry: 'US',
+  };
+  if (!listing.showFullAddress) return base;
+  const { line1, unit } = listing.address;
+  return {
+    ...base,
+    streetAddress: unit === undefined ? line1 : `${line1} #${unit}`,
+  };
+}
+
+/**
+ * The listing-report node: RealEstateListing whose `about` is the dwelling
+ * subtype by class, with Offer (availability InStock — this builder serves
+ * MARKETED listings; the sold archive is a Phase 4b builder), ImageObject[]
+ * with intrinsic dimensions, and the degraded PostalAddress/GeoCoordinates.
+ */
+export function realEstateListingNode(
+  listing: Listing,
+  url: string,
+  locale: Locale
+): Record<string, unknown> {
+  const address = displayAddress(listing);
+  const facts = listing.facts;
+
+  const dwelling: Record<string, unknown> = {
+    '@type': DWELLING_TYPE[listing.class],
+    name: address.heading,
+    address: listingPostalAddressNode(listing),
+    numberOfBedrooms: facts.beds,
+    numberOfFullBathrooms: facts.bathsFull,
+    floorSize: { '@type': 'QuantitativeValue', value: facts.sqft, unitCode: 'FTK' },
+    yearBuilt: facts.yearBuilt,
+  };
+  if (facts.bathsHalf > 0) dwelling.numberOfPartialBathrooms = facts.bathsHalf;
+  if (listing.showFullAddress) {
+    dwelling.geo = {
+      '@type': 'GeoCoordinates',
+      latitude: listing.geo.lat,
+      longitude: listing.geo.lng,
+    };
+  }
+
+  return {
+    '@type': 'RealEstateListing',
+    '@id': `${url}#listing`,
+    url,
+    name: address.heading,
+    description: listing.summary[locale],
+    inLanguage: locale,
+    datePosted: listing.dates.listed,
+    mainEntityOfPage: url,
+    provider: { '@id': AGENT_ID },
+    about: dwelling,
+    image: listing.media.map((asset) => ({
+      '@type': 'ImageObject',
+      contentUrl: `${SITE_ORIGIN}${asset.src}`,
+      width: asset.w,
+      height: asset.h,
+      caption: asset.alt[locale],
+    })),
+    offers: {
+      '@type': 'Offer',
+      price: listing.price,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      offeredBy: { '@id': AGENT_ID },
+    },
+  };
+}
+
+/** Index ItemList — pairs with collectionPageNode on the listings index. */
+export function itemListNode(
+  items: { name: string; url: string }[],
+  url: string
+): Record<string, unknown> {
+  return {
+    '@type': 'ItemList',
+    '@id': `${url}#items`,
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      url: item.url,
+    })),
+  };
 }

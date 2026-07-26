@@ -18,7 +18,9 @@ describe('FieldSpec parity', () => {
   it('every labelKey and helperKey resolves to a chrome string', () => {
     for (const field of FIELDS) {
       expect(() => uiString(field.labelKey)).not.toThrow();
-      if (field.helperKey) expect(() => uiString(field.helperKey)).not.toThrow();
+      // Captured so the narrowing survives into the expect closure.
+      const helperKey = field.helperKey;
+      if (helperKey) expect(() => uiString(helperKey)).not.toThrow();
     }
   });
 
