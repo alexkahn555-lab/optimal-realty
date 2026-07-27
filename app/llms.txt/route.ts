@@ -5,6 +5,7 @@ import {
   publishedPortals,
   publishedSubpages,
   publishedTools,
+  soldListings,
 } from '@/lib/content/loaders';
 import { href } from '@/lib/seo/href';
 import { displayAddress } from '@/components/listing/helpers';
@@ -31,8 +32,12 @@ export function GET(): Response {
       line(tool.title.en, `tool.${tool.id}` as RouteId)
     ),
     line('Listings', 'listings'),
-    // Marketed listings only; labels run through the privacy degradation.
+    // Labels run through the privacy degradation; sold pages are permanent.
     ...activeListings().map((listing) =>
+      line(displayAddress(listing).heading, `listing.${listing.slug}` as RouteId)
+    ),
+    line('Sold listings', 'listings.sold'),
+    ...soldListings().map((listing) =>
       line(displayAddress(listing).heading, `listing.${listing.slug}` as RouteId)
     ),
     line('About', 'about'),

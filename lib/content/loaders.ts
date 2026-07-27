@@ -10,6 +10,7 @@ import type {
 } from '@/lib/types';
 import { LISTING_L_2026_001 } from '@/content/listings/l-2026-001';
 import { LISTING_L_2026_002 } from '@/content/listings/l-2026-002';
+import { LISTING_L_2026_003 } from '@/content/listings/l-2026-003';
 import { SELLERS_FAQS, SELLERS_PORTAL } from '@/content/portals/sellers';
 import {
   HOME_VALUATION_FAQS,
@@ -51,9 +52,13 @@ const SUBPAGES: readonly PortalSubpage[] = [
   SELLING_PROCESS_SUBPAGE,
 ];
 const TOOLS: readonly ToolDef[] = [NET_PROCEEDS_TOOL];
-// Phase 4a: two realistic-but-invented fixtures (the test surface). Real
-// listings later replace the fixture files with same-shape data files.
-const LISTINGS: readonly Listing[] = [LISTING_L_2026_001, LISTING_L_2026_002];
+// Phase 4a/4b: three realistic-but-invented fixtures (two active, one sold —
+// the test surface). Real listings later replace the fixture files 1:1.
+const LISTINGS: readonly Listing[] = [
+  LISTING_L_2026_001,
+  LISTING_L_2026_002,
+  LISTING_L_2026_003,
+];
 const NEIGHBORHOODS: readonly Neighborhood[] = [];
 
 /** Site-wide FAQ pool (ids are globally unique; enforced by test). */
@@ -160,14 +165,34 @@ export function publishedListings(): Listing[] {
 }
 
 /**
- * Currently-marketed listings — the inventory the index, report routes,
- * sitemap, and llms.txt surface this phase. The sold archive (`sold`/`leased`)
- * is a Phase 4b view; until it exists, sold listings publish nowhere.
+ * Status predicates — exported so the active↔sold flip (a ONE-FIELD edit that
+ * moves a listing between indexes and adds/drops its Offer node) is testable
+ * on listing variants without re-registering content.
  */
-export function activeListings(): Listing[] {
-  return publishedListings().filter(
-    (l) => l.status === 'active' || l.status === 'coming-soon' || l.status === 'pending'
+export function isMarketed(listing: Listing): boolean {
+  return (
+    listing.status === 'active' ||
+    listing.status === 'coming-soon' ||
+    listing.status === 'pending'
   );
+}
+
+export function isSoldArchived(listing: Listing): boolean {
+  return listing.status === 'sold' || listing.status === 'leased';
+}
+
+/** Currently-marketed inventory: the active index, report routes, Offer nodes. */
+export function activeListings(): Listing[] {
+  return publishedListings().filter(isMarketed);
+}
+
+/**
+ * Closed transactions (Phase 4b sold view). Sold detail pages keep their URLs
+ * permanently but emit WebPage — never RealEstateListing/Offer (an offer for
+ * unavailable property is misleading structured data).
+ */
+export function soldListings(): Listing[] {
+  return publishedListings().filter(isSoldArchived);
 }
 
 /**

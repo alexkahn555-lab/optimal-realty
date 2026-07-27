@@ -12,10 +12,14 @@ import { LEGAL_PAGES, LEGAL_SLUGS, type LegalPageDef } from '@/content/legal';
 import { isLocale } from '@/lib/i18n';
 import {
   activeListings,
+  isSoldArchived,
   publishedPortals,
   publishedSubpages,
   publishedTools,
+  soldListings,
 } from '@/lib/content/loaders';
+import { SITE_ORIGIN } from '@/config/origin';
+import { LISTING_UI } from '@/components/listing/strings';
 import { href } from '@/lib/seo/href';
 import { metaFor } from '@/lib/seo/meta';
 import { displayAddress } from '@/components/listing/helpers';
@@ -44,6 +48,7 @@ type SubMatch =
   | { kind: 'subpage'; subpage: PortalSubpage; portal: Portal }
   | { kind: 'tool'; tool: ToolDef }
   | { kind: 'legal'; page: LegalPageDef }
+  | { kind: 'soldIndex' }
   | { kind: 'listing'; listing: Listing };
 
 function resolveSub(locale: Locale, section: string, sub: string): SubMatch | null {
@@ -62,9 +67,12 @@ function resolveSub(locale: Locale, section: string, sub: string): SubMatch | nu
       return { kind: 'legal', page: LEGAL_PAGES[slug] };
     }
   }
-  // Marketed listings only — the sold archive is a Phase 4b route (its view
-  // does not exist yet, so sold/leased listings resolve nowhere).
-  for (const listing of activeListings()) {
+  // The sold-archive index resolves BEFORE listing slugs (the registry slug
+  // 'sold'/'vendidas' is reserved; no listing slug may shadow it).
+  if (pathname === href('listings.sold', locale)) return { kind: 'soldIndex' };
+  // Marketed listings render the report; sold/leased keep their URL
+  // permanently and render the closed-transaction record (Phase 4b).
+  for (const listing of [...activeListings(), ...soldListings()]) {
     if (href(`listing.${listing.slug}`, locale) === pathname) {
       return { kind: 'listing', listing };
     }
@@ -91,7 +99,8 @@ export function generateStaticParams(): {
     ...publishedSubpages().map((s) => routeParams(locale, `subpage.${s.id}`)),
     ...publishedTools().map((tool) => routeParams(locale, `tool.${tool.id}`)),
     ...LEGAL_SLUGS.map((slug) => routeParams(locale, `legal.${slug}`)),
-    ...activeListings().map((listing) =>
+    routeParams(locale, 'listings.sold'),
+    ...[...activeListings(), ...soldListings()].map((listing) =>
       routeParams(locale, `listing.${listing.slug}`)
     ),
   ]);
@@ -141,11 +150,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ),
         robots: { index: false, follow: true },
       };
+    case 'soldIndex':
+      return metaFor(
+        {
+          id: 'listings.sold',
+          title: LISTING_UI.sold.indexTitle,
+          description: LISTING_UI.sold.indexIntro,
+        },
+        locale
+      );
     case 'listing': {
       // Title = the privacy-degraded address heading (locale-invariant);
       // description = the auto-templated summary (TK-gated at publish).
+      // og:image = the build-time branded card (D3) — structured data on a
+      // card, never a fabricated property photo.
       const heading = displayAddress(match.listing).heading;
-      return metaFor(
+      const meta = metaFor(
         {
           id: `listing.${match.listing.slug}`,
           title: { en: heading, es: heading },
@@ -153,6 +173,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         },
         locale
       );
+      return {
+        ...meta,
+        openGraph: {
+          ...meta.openGraph,
+          images: [
+            {
+              url: `${SITE_ORIGIN}/listings/${match.listing.slug}/opengraph-image`,
+              width: 1200,
+              height: 630,
+              alt: heading,
+            },
+          ],
+        },
+      };
     }
   }
 }
@@ -180,7 +214,15 @@ export default async function SubPage({ params }: PageProps): Promise<JSX.Elemen
     }
     case 'legal':
       return <LegalTemplate page={match.page} locale={locale} />;
+    case 'soldIndex': {
+      const { SoldIndexView } = await import('./sold-index-view');
+      return <SoldIndexView locale={locale} />;
+    }
     case 'listing': {
+      if (isSoldArchived(match.listing)) {
+        const { SoldDetailView } = await import('./sold-detail-view');
+        return <SoldDetailView listing={match.listing} locale={locale} />;
+      }
       const { ListingReportView } = await import('./listing-report-view');
       return <ListingReportView listing={match.listing} locale={locale} />;
     }

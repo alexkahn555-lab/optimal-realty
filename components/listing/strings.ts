@@ -95,4 +95,100 @@ export const LISTING_UI = {
   disclosure: {
     heading: { en: 'Disclosures', es: 'Divulgaciones' },
   },
+
+  /* ==========================================================================
+   * Phase 4b — remaining report modules, sold view, lightbox, map facade.
+   * ========================================================================== */
+
+  /* ---- Price history (M5) -------------------------------------------------- */
+  priceHistory: {
+    heading: { en: 'Price history', es: 'Historial de precios' },
+    listed: { en: 'Listed', es: 'Listado' },
+    reduced: { en: 'Reduced', es: 'Reducido' },
+    sold: { en: 'Sold', es: 'Vendido' },
+  },
+
+  /* ---- Scorecard (M7) — scores are the broker's own assessment ------------- */
+  scorecard: {
+    heading: { en: "Broker's scorecard", es: 'Evaluación del corredor' },
+    scaleNote: {
+      en: 'Scored 1–5 by the listing broker — a professional assessment, not a third-party rating.',
+      es: 'Puntuación de 1 a 5 por el corredor — evaluación profesional, no una calificación de terceros.',
+    },
+    location: { en: 'Location', es: 'Ubicación' },
+    condition: { en: 'Condition', es: 'Estado' },
+    layout: { en: 'Layout', es: 'Distribución' },
+    outdoor: { en: 'Outdoor space', es: 'Espacio exterior' },
+    'build-quality': { en: 'Build quality', es: 'Calidad de construcción' },
+    hoa: { en: 'Association', es: 'Asociación' },
+    rentability: { en: 'Rentability', es: 'Rentabilidad' },
+  },
+
+  /* ---- Feature groups (M9) -------------------------------------------------- */
+  features: {
+    heading: { en: 'Features', es: 'Características' },
+  },
+
+  /* ---- Map facade (M10) ----------------------------------------------------- */
+  map: {
+    heading: { en: 'Location', es: 'Ubicación' },
+    load: { en: 'Load interactive map', es: 'Cargar mapa interactivo' },
+    source: {
+      en: 'Opens an OpenStreetMap embed',
+      es: 'Abre un mapa de OpenStreetMap',
+    },
+    iframeTitle: { en: 'Interactive map', es: 'Mapa interactivo' },
+  },
+
+  /* ---- Neighborhood context (M11) ------------------------------------------- */
+  neighborhood: {
+    heading: { en: 'Neighborhood', es: 'Vecindario' },
+  },
+
+  /* ---- Narrative + highlights (M12) ----------------------------------------- */
+  narrative: {
+    heading: { en: 'About this property', es: 'Sobre esta propiedad' },
+    highlights: { en: 'Highlights', es: 'Destacados' },
+  },
+
+  /* ---- Similar listings ------------------------------------------------------ */
+  similar: {
+    heading: { en: 'Similar listings', es: 'Propiedades similares' },
+  },
+
+  /* ---- Lightbox (client island labels, resolved server-side) ---------------- */
+  lightbox: {
+    close: { en: 'Close', es: 'Cerrar' },
+    prev: { en: 'Previous image', es: 'Imagen anterior' },
+    next: { en: 'Next image', es: 'Imagen siguiente' },
+  },
+
+  /* ---- Sold view -------------------------------------------------------------- */
+  sold: {
+    indexTitle: { en: 'Sold listings', es: 'Propiedades vendidas' },
+    indexIntro: {
+      en:
+        'Closed transactions represented by Optimal Realty in Miami-Dade ' +
+        'County. Each sold listing keeps its page as a permanent record.',
+      es:
+        'Transacciones cerradas representadas por Optimal Realty en el condado ' +
+        'de Miami-Dade. Cada propiedad vendida conserva su página como registro ' +
+        'permanente.',
+    },
+    bannerTag: { en: 'Sold', es: 'Vendida' },
+    closedOn: { en: 'Transaction closed', es: 'Transacción cerrada el' },
+    closedPrice: { en: 'Closed price', es: 'Precio de cierre' },
+    representedSeller: {
+      en: 'Optimal Realty represented the seller.',
+      es: 'Optimal Realty representó al vendedor.',
+    },
+    representedBuyer: {
+      en: 'Optimal Realty represented the buyer.',
+      es: 'Optimal Realty representó al comprador.',
+    },
+    representedBoth: {
+      en: 'Optimal Realty represented both sides.',
+      es: 'Optimal Realty representó a ambas partes.',
+    },
+  },
 } satisfies Record<string, Record<string, Localized>>;

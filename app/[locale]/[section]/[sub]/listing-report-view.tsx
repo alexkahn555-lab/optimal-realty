@@ -8,24 +8,29 @@ import { LeadCta } from '@/components/portal/LeadCta';
 import { CostBreakdown } from '@/components/listing/CostBreakdown';
 import { DisclosureBlock } from '@/components/listing/DisclosureBlock';
 import { FactsTable } from '@/components/listing/FactsTable';
+import { FeatureGroups } from '@/components/listing/FeatureGroups';
 import { IdentityHeader } from '@/components/listing/IdentityHeader';
 import { ListingAnswer } from '@/components/listing/ListingAnswer';
 import { ListingBreadcrumbs } from '@/components/listing/ListingBreadcrumbs';
+import { ListingFaq } from '@/components/listing/ListingFaq';
+import { MapFacade } from '@/components/listing/MapFacade';
 import { MediaGallery } from '@/components/listing/MediaGallery';
+import { NarrativeBlock } from '@/components/listing/NarrativeBlock';
+import { NeighborhoodContext } from '@/components/listing/NeighborhoodContext';
+import { PriceHistoryChart } from '@/components/listing/PriceHistoryChart';
+import { Scorecard } from '@/components/listing/Scorecard';
+import { SimilarListings } from '@/components/listing/SimilarListings';
 
 /**
- * LISTING REPORT VIEW (D4) — dynamically imported by the [sub] router so the
- * report's client chunks (next/image + the LeadForm island via LeadFormLazy)
- * are scoped to listing URLs and never ride into legal/tool/subpage documents
- * sharing the page entry (Part 8). LeadCta comes from its concrete file, never
- * the portal barrel.
+ * LISTING REPORT VIEW — dynamically imported by the [sub] router so the
+ * report's client chunks (next/image, the LeadForm island, the lightbox
+ * shell, the map facade — all via their lazy boundaries) are scoped to
+ * listing URLs and never ride into legal/tool/subpage documents sharing the
+ * page entry (Part 8). LeadCta comes from its concrete file, never the barrel.
  *
- * Module contract (Part 7.3): (listing, locale) => Section | null — a module
- * with absent data renders null and the report degrades BY OMISSION, never by
- * placeholder text. Phase 4a composes the SHIPPABLE CORE only (M1 breadcrumbs,
- * M2 identity, M3 answer, M4 gallery, M6 costs, M8 facts, M14 lead +
- * disclosure) into the three-zone grid; the commented seams below are where
- * the Phase 4b modules slot without re-layout.
+ * Module contract (Part 7.3): (listing, locale) => Section | null — absent
+ * data renders null and the report degrades BY OMISSION. Phase 4b completed
+ * the module set; M11 renders null until Phase 7 registers neighborhoods.
  */
 export function ListingReportView({
   listing,
@@ -49,17 +54,21 @@ export function ListingReportView({
       <div className="mt-12 gap-x-12 space-y-12 lg:grid lg:grid-cols-3 lg:space-y-0">
         {/* ZONE 2 — evidence column. */}
         <div className="space-y-12 lg:col-span-2">
-          <MediaGallery listing={listing} locale={locale} /> {/* M4 (lightbox seam in-module) */}
-          {/* 4b seams — M5 PriceSqftChart · M12 Narrative · M9 FeatureGroups ·
-              M11 NeighborhoodContext · M13 ListingFaq: modules render null by
-              contract and slot here in order. */}
+          <MediaGallery listing={listing} locale={locale} /> {/* M4 + lightbox */}
+          <PriceHistoryChart listing={listing} locale={locale} /> {/* M5 */}
+          <NarrativeBlock listing={listing} locale={locale} /> {/* M12 */}
+          <FeatureGroups listing={listing} locale={locale} /> {/* M9 */}
           <FactsTable listing={listing} locale={locale} /> {/* M8 */}
+          <NeighborhoodContext listing={listing} locale={locale} /> {/* M11 — null until Phase 7 */}
+          <ListingFaq listing={listing} locale={locale} /> {/* M13 */}
+          <SimilarListings listing={listing} locale={locale} />
         </div>
 
         {/* ZONE 3 — decision rail. */}
         <aside className="space-y-12 lg:col-span-1">
           <CostBreakdown listing={listing} locale={locale} /> {/* M6 */}
-          {/* 4b seams — M7 Scorecard · M10 MapFacade slot here. */}
+          <Scorecard listing={listing} locale={locale} /> {/* M7 */}
+          <MapFacade listing={listing} locale={locale} /> {/* M10 */}
           <div>
             <LeadCta
               locale={locale}

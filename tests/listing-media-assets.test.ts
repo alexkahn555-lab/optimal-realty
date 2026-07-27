@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { LISTING_L_2026_001 } from '@/content/listings/l-2026-001';
 import { LISTING_L_2026_002 } from '@/content/listings/l-2026-002';
+import { LISTING_L_2026_003 } from '@/content/listings/l-2026-003';
 
 /**
  * D2 — the media pipeline's committed outputs hold the Part 8.3 contract:
@@ -18,7 +19,11 @@ const ROOT = process.cwd();
 const MAX_EDGE = 2000;
 const MAX_BYTES = 600 * 1024;
 
-const ASSETS = [...LISTING_L_2026_001.media, ...LISTING_L_2026_002.media];
+const ASSETS = [
+  ...LISTING_L_2026_001.media,
+  ...LISTING_L_2026_002.media,
+  ...LISTING_L_2026_003.media,
+];
 
 describe('committed listing media', () => {
   it('every asset exists with matching intrinsic dimensions and an AVIF primary', async () => {

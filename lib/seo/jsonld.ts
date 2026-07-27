@@ -371,6 +371,32 @@ export function realEstateListingNode(
   };
 }
 
+/**
+ * Plain WebPage node (Phase 4b): the home router and the SOLD listing detail.
+ * A sold page deliberately emits WebPage — never RealEstateListing and never
+ * an Offer: structured data offering an unavailable property is misleading
+ * and a manual-action risk. References #website / #agent by @id only.
+ */
+export function webPageNode(
+  name: string,
+  description: string,
+  url: string,
+  locale: Locale,
+  dateModified?: string
+): Record<string, unknown> {
+  return {
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    name,
+    description,
+    url,
+    inLanguage: locale,
+    isPartOf: { '@id': `${SITE_ORIGIN}/#website` },
+    publisher: { '@id': AGENT_ID },
+    ...(dateModified === undefined ? {} : { dateModified }),
+  };
+}
+
 /** Index ItemList — pairs with collectionPageNode on the listings index. */
 export function itemListNode(
   items: { name: string; url: string }[],

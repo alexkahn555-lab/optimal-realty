@@ -33,7 +33,12 @@ export const LISTING_L_2026_001: Listing = {
   showFullAddress: true,
   geo: { lat: 25.7215, lng: -80.2684 },
   price: 1_285_000,
-  priceHistory: [{ date: '2026-06-18', price: 1_285_000, kind: 'listed' }],
+  // Two events so the temporal price-history chart (M5) renders on this
+  // fixture; the condo fixture has none and demonstrates degrade-by-omission.
+  priceHistory: [
+    { date: '2026-06-18', price: 1_315_000, kind: 'listed' },
+    { date: '2026-07-10', price: 1_285_000, kind: 'reduced' },
+  ],
   facts: {
     beds: 4,
     bathsFull: 3,
@@ -102,6 +107,25 @@ export const LISTING_L_2026_001: Listing = {
     es: 'TK_LISTING_L_2026_001_NARRATIVE',
   },
   highlights: [],
-  featureGroups: [],
+  // Structural amenity labels (fact-shaped fixture data, same class as
+  // beds/baths — not broker prose). Replaced per real listing.
+  featureGroups: [
+    {
+      group: { en: 'Interior', es: 'Interior' },
+      items: [
+        { en: 'Impact-resistant windows', es: 'Ventanas resistentes a impactos' },
+        { en: 'Quartz kitchen counters', es: 'Encimeras de cuarzo en la cocina' },
+        { en: 'Split floor plan', es: 'Distribución dividida' },
+      ],
+    },
+    {
+      group: { en: 'Exterior', es: 'Exterior' },
+      items: [
+        { en: 'Heated pool', es: 'Piscina climatizada' },
+        { en: 'Covered terrace', es: 'Terraza cubierta' },
+        { en: 'Two-car garage', es: 'Garaje para dos autos' },
+      ],
+    },
+  ],
   dates: { listed: '2026-06-18' },
 };

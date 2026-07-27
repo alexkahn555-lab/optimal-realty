@@ -88,6 +88,22 @@ export const LISTING_L_2026_002: Listing = {
     es: 'TK_LISTING_L_2026_002_NARRATIVE',
   },
   highlights: [],
-  featureGroups: [],
+  // Structural amenity labels (fact-shaped fixture data, not broker prose).
+  featureGroups: [
+    {
+      group: { en: 'Unit', es: 'Unidad' },
+      items: [
+        { en: 'Floor-to-ceiling windows', es: 'Ventanas de piso a techo' },
+        { en: 'In-unit laundry', es: 'Lavandería en la unidad' },
+      ],
+    },
+    {
+      group: { en: 'Building', es: 'Edificio' },
+      items: [
+        { en: 'Fitness center', es: 'Gimnasio' },
+        { en: 'Resident lounge', es: 'Salón para residentes' },
+      ],
+    },
+  ],
   dates: { listed: '2026-07-02' },
 };

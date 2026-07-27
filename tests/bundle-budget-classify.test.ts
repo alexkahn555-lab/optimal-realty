@@ -80,6 +80,21 @@ describe('bundle-budget classify()', () => {
     expect(classify('/es/propiedades', '/[locale]/[section]')).toBe('content');
   });
 
+  it('weighs the sold archive routes in the listings section (Phase 4b)', () => {
+    expect(classify('/en/listings/sold', '/[locale]/[section]/[sub]')).toBe(
+      'listingReport'
+    );
+    expect(
+      classify('/es/propiedades/vendidas', '/[locale]/[section]/[sub]')
+    ).toBe('listingReport');
+    expect(
+      classify(
+        '/en/listings/300-example-court-palmetto-bay',
+        '/[locale]/[section]/[sub]'
+      )
+    ).toBe('listingReport');
+  });
+
   it('skips framework error shells (no Part 8 class)', () => {
     expect(classify('/_not-found', '/_not-found')).toBeNull();
     expect(classify('/_global-error', '/_global-error')).toBeNull();

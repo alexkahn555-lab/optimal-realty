@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { LISTING_L_2026_001 } from '@/content/listings/l-2026-001';
 import { LISTING_L_2026_002 } from '@/content/listings/l-2026-002';
+import { LISTING_L_2026_003 } from '@/content/listings/l-2026-003';
 import {
   activeListings,
+  isMarketed,
   isPublishedListing,
+  isSoldArchived,
   publishedListings,
+  soldListings,
   validateListingMedia,
 } from '@/lib/content/loaders';
 import type { Listing } from '@/lib/types';
@@ -56,16 +60,25 @@ describe('listing publish gate', () => {
     expect(isPublishedListing(VALID)).toBe(true);
   });
 
-  it('activeListings surfaces marketed statuses only (sold archive is 4b)', () => {
+  it('activeListings and soldListings split the registry by status', () => {
     expect(activeListings().map((l) => l.id)).toEqual([
       LISTING_L_2026_001.id,
       LISTING_L_2026_002.id,
     ]);
-    // Directly: the predicate chain excludes sold/leased.
-    expect(isPublishedListing(variant({ status: 'sold' }))).toBe(true); // published…
-    // …but not marketed: activeListings filters on status, proven by the
-    // registered fixtures both being 'active' (a sold fixture is forbidden —
-    // it would imply a real transaction, so none can exist to register).
+    expect(soldListings().map((l) => l.id)).toEqual([LISTING_L_2026_003.id]);
+  });
+
+  it('the active↔sold flip is a ONE-FIELD edit that swaps index membership', () => {
+    // Sold fixture flipped to active: leaves the archive, joins the market.
+    const relisted: Listing = { ...LISTING_L_2026_003, status: 'active' };
+    expect(isMarketed(relisted)).toBe(true);
+    expect(isSoldArchived(relisted)).toBe(false);
+    // Active fixture flipped to sold: leaves the market, joins the archive —
+    // still published (the URL is permanent), never marketed.
+    const closed = variant({ status: 'sold' });
+    expect(isPublishedListing(closed)).toBe(true);
+    expect(isMarketed(closed)).toBe(false);
+    expect(isSoldArchived(closed)).toBe(true);
   });
 });
 
@@ -102,16 +115,26 @@ describe('validateListingMedia', () => {
 });
 
 describe('fixture content-integrity invariants (Part 1.4 / R-12)', () => {
-  const fixtures = [LISTING_L_2026_001, LISTING_L_2026_002];
+  const activeFixtures = [LISTING_L_2026_001, LISTING_L_2026_002];
+  const fixtures = [...activeFixtures, LISTING_L_2026_003];
 
-  it("fixtures are status 'active' only — never a proof position", () => {
-    for (const fixture of fixtures) {
+  it("ACTIVE fixtures carry no sold data — never a proof position", () => {
+    for (const fixture of activeFixtures) {
       expect(fixture.status).toBe('active');
       expect(fixture.soldData).toBeUndefined();
       expect(fixture.priceHistory?.every((p) => p.kind !== 'sold') ?? true).toBe(
         true
       );
     }
+  });
+
+  it('the ONE sold fixture (4b) reads unmistakably as a fixture', () => {
+    // A sold listing sits where proof of a real transaction would sit — the
+    // obviously-fake street name is the safeguard.
+    expect(LISTING_L_2026_003.status).toBe('sold');
+    expect(LISTING_L_2026_003.address.line1).toContain('Example');
+    expect(LISTING_L_2026_003.soldData).toBeDefined();
+    expect(LISTING_L_2026_003.dates.sold).toBeDefined();
   });
 
   it('fixture addresses read as fixtures, in real Miami-Dade cities', () => {
@@ -124,6 +147,14 @@ describe('fixture content-integrity invariants (Part 1.4 / R-12)', () => {
     for (const fixture of fixtures) {
       expect(fixture.narrative.en).toMatch(/^TK_/);
       expect(fixture.narrative.es).toMatch(/^TK_/);
+    }
+  });
+
+  it('scorecard notes are TK_ (broker prose); scores are structural', () => {
+    for (const entry of LISTING_L_2026_003.scorecard ?? []) {
+      expect(entry.note.en).toMatch(/^TK_/);
+      expect(entry.score).toBeGreaterThanOrEqual(1);
+      expect(entry.score).toBeLessThanOrEqual(5);
     }
   });
 

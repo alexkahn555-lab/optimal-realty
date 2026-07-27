@@ -7,6 +7,7 @@ import {
   publishedSubpages,
   publishedTools,
   publishedNeighborhoods,
+  soldListings,
 } from '@/lib/content/loaders';
 import type { Locale, RouteId } from '@/lib/types';
 
@@ -24,9 +25,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...publishedPortals().map((p) => `portal.${p.id}` as RouteId),
     ...publishedSubpages().map((s) => `subpage.${s.id}` as RouteId),
     ...publishedTools().map((t) => `tool.${t.id}` as RouteId),
-    // Marketed listings only — the sitemap must mirror the routes that exist,
-    // and the sold archive is Phase 4b.
+    // Marketed inventory plus the sold archive (Phase 4b): sold pages keep
+    // their URLs permanently, so they stay in the sitemap.
+    'listings.sold',
     ...activeListings().map((l) => `listing.${l.slug}` as RouteId),
+    ...soldListings().map((l) => `listing.${l.slug}` as RouteId),
     ...publishedNeighborhoods().map(
       (n) => `neighborhood.${n.slug}` as RouteId,
     ),
