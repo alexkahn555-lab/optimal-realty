@@ -98,6 +98,61 @@ const LISTING_SECTIONS = new Set(['listings', 'propiedades']);
 const SOLD_INDEX_SUBS = new Set(['sold', 'vendidas']);
 
 /**
+ * ZERO-JS assertion (Part 8.2, dispatch 5a): these concrete URLs must ship NO
+ * route-specific client JavaScript — answer blocks, advice, FAQ, tables,
+ * breadcrumbs, schema emitters are all RSC at budget 0. The per-class KB
+ * ceilings alone cannot catch an island landing here (the content class has
+ * ~12-18 KB headroom), so these routes are additionally pinned to the
+ * measured framework floor.
+ *
+ * URLs mirrored from lib/seo/href.ts (about/tools/legal, both locales — keep
+ * in sync with the registry). A listed URL that stops being weighed FAILS the
+ * gate: a rename must move the assertion, never silently drop it.
+ */
+export const ZERO_JS_URLS = new Set([
+  '/en/about',
+  '/es/nosotros',
+  '/en/tools',
+  '/es/herramientas',
+  '/en/legal/privacy',
+  '/en/legal/terms',
+  '/en/legal/disclosures',
+  '/en/legal/accessibility',
+  '/es/legal/privacidad',
+  '/es/legal/terminos',
+  '/es/legal/divulgaciones',
+  '/es/legal/accesibilidad',
+]);
+
+/**
+ * Tolerance above the floor: covers the lazy-boundary stubs these routes
+ * legitimately inherit from shared segment chunks (measured +0.1 KB today)
+ * while staying far below the smallest real island in the codebase (the
+ * lightbox shell, 1.09 KB gz; LeadForm 6.0; CalcIsland 10.6) — an island
+ * cannot fit inside it.
+ */
+export const ZERO_JS_TOLERANCE_BYTES = 512;
+
+/**
+ * Pure zero-JS assertion over weighed rows [{url, bytes}]. The floor is
+ * DERIVED at runtime as the minimum weighed first-load across ALL routes —
+ * hard-coded floors rotted on the last Next upgrade; a derived floor tracks
+ * the framework. Returns the floor, the ZERO_JS rows that breach
+ * floor + tolerance, and any listed URL missing from the weighed set.
+ */
+export function zeroJsBreaches(weighed) {
+  const floor = Math.min(...weighed.map((r) => r.bytes));
+  const seen = new Set(weighed.map((r) => r.url));
+  return {
+    floor,
+    breaches: weighed.filter(
+      (r) => ZERO_JS_URLS.has(r.url) && r.bytes > floor + ZERO_JS_TOLERANCE_BYTES
+    ),
+    missing: [...ZERO_JS_URLS].filter((url) => !seen.has(url)),
+  };
+}
+
+/**
  * Concrete URL + its srcRoute pattern → budget class, or null for routes with
  * no Part 8 class (framework error shells).
  */
@@ -160,6 +215,16 @@ function main() {
     }
     if (CEILINGS.base > CEILINGS.content)
       fail('base ceiling must not exceed content ceiling');
+    if (ZERO_JS_URLS.size === 0)
+      fail('ZERO_JS_URLS is empty — the zero-JS assertion must never be vacuous');
+    if (
+      typeof ZERO_JS_TOLERANCE_BYTES !== 'number' ||
+      ZERO_JS_TOLERANCE_BYTES <= 0 ||
+      ZERO_JS_TOLERANCE_BYTES >= 1024
+    )
+      fail(
+        `zero-JS tolerance must sit in (0, 1024) bytes — below every real island: ${ZERO_JS_TOLERANCE_BYTES}`
+      );
     console.log('  bundle-budget: budget table valid (pre-pass).');
     process.exit(0);
   }
@@ -220,22 +285,48 @@ function main() {
   if (weighed.length === 0)
     fail('no page routes found to weigh — the gate must never pass on an empty set');
 
+  // Zero-JS assertion (dispatch 5a): floor derived from THIS run's weigh-in.
+  const zeroJs = zeroJsBreaches(weighed);
+  const zeroJsBreachSet = new Set(zeroJs.breaches.map((r) => r.url));
+
   const w = Math.max(...weighed.map((r) => r.url.length), 5) + 2;
-  const line = '─'.repeat(w + 44);
+  const line = '─'.repeat(w + 60);
   console.log(`\n  bundle-budget — ${weighed.length} route(s) weighed, first-load JS gzipped\n  ${line}`);
   const breaches = [];
   for (const r of weighed) {
     const kb = r.bytes / 1024;
     const over = kb > r.ceiling;
     if (over) breaches.push(r);
+    // ZERO_JS rows carry their delta from the floor so drift toward the
+    // tolerance is visible long before it breaches.
+    const zeroJsCol = ZERO_JS_URLS.has(r.url)
+      ? `  0JS Δ+${((r.bytes - zeroJs.floor) / 1024).toFixed(2)} KB ${zeroJsBreachSet.has(r.url) ? '✗ ZERO-JS BREACH' : '✓'}`
+      : '';
     console.log(
-      `  ${r.url.padEnd(w)} ${r.cls.padEnd(14)} ${kb.toFixed(1).padStart(7)} KB  ≤${String(r.ceiling).padEnd(3)} KB  ${over ? '✗ BREACH' : '✓'}`
+      `  ${r.url.padEnd(w)} ${r.cls.padEnd(14)} ${kb.toFixed(1).padStart(7)} KB  ≤${String(r.ceiling).padEnd(3)} KB  ${over ? '✗ BREACH' : '✓'}${zeroJsCol}`
     );
   }
   console.log(`  ${line}`);
+  console.log(
+    `  zero-JS floor ${(zeroJs.floor / 1024).toFixed(1)} KB (min weighed first-load) · tolerance +${(ZERO_JS_TOLERANCE_BYTES / 1024).toFixed(1)} KB · ${ZERO_JS_URLS.size} route(s) asserted`
+  );
   for (const s of skipped) console.log(`  skipped: ${s}`);
   console.log('');
 
+  if (zeroJs.missing.length > 0) {
+    for (const url of zeroJs.missing)
+      console.error(`  ✗ ZERO_JS route was not weighed (renamed or removed?): ${url}`);
+    fail(
+      `${zeroJs.missing.length} ZERO_JS route(s) missing from the weighed set — move the assertion, never drop it`
+    );
+  }
+  if (zeroJs.breaches.length > 0) {
+    for (const r of zeroJs.breaches)
+      console.error(
+        `  ✗ ${r.url} must ship zero route-specific JS: ${(r.bytes / 1024).toFixed(1)} KB is ${((r.bytes - zeroJs.floor) / 1024).toFixed(2)} KB over the ${(zeroJs.floor / 1024).toFixed(1)} KB floor (tolerance ${(ZERO_JS_TOLERANCE_BYTES / 1024).toFixed(1)} KB)`
+      );
+    fail(`${zeroJs.breaches.length} zero-JS route(s) acquired client JavaScript`);
+  }
   if (breaches.length > 0) {
     for (const r of breaches)
       console.error(

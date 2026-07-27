@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error — plain .mjs script, no type declarations; the import is the test.
-import { CEILINGS, classify } from '../scripts/bundle-budget.mjs';
+import { CEILINGS, classify, ZERO_JS_URLS } from '../scripts/bundle-budget.mjs';
 
 /**
  * The gate's route classifier must recognize the dynamic route classes the app
@@ -105,5 +105,17 @@ describe('bundle-budget classify()', () => {
   it('skips framework error shells (no Part 8 class)', () => {
     expect(classify('/_not-found', '/_not-found')).toBeNull();
     expect(classify('/_global-error', '/_global-error')).toBeNull();
+  });
+
+  it('every ZERO_JS-asserted route is a content-class [section] route (5a)', () => {
+    // The zero-JS pin applies on top of (never instead of) the content
+    // ceiling: each asserted URL must classify as content, so both checks run.
+    for (const url of ZERO_JS_URLS as Set<string>) {
+      const srcRoute =
+        url.split('/').length === 3
+          ? '/[locale]/[section]'
+          : '/[locale]/[section]/[sub]';
+      expect(classify(url, srcRoute), url).toBe('content');
+    }
   });
 });
