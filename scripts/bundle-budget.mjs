@@ -59,27 +59,34 @@ const ROOT = process.cwd();
  * them) + (~12–15 KB growth headroom), so any future edit must restate its
  * derivation from a fresh measurement.
  *
- * Measured floors, this tree, islands correctly scoped (leak fixed):
- *   142.1  framework floor — /[locale] home: React+Next runtime, layout,
- *          MobileNav, fonts glue. No page islands.
- *   143.4  content route, no form (legal, tools hub, about) = floor + ~1.3
- *          segment router glue (incl. the LeadFormLazy/CalcIslandLazy stubs).
- *   149.5  content route with LeadForm (contact, portal hubs, subpages)
- *          = 143.4 + 6.0 LeadForm island chunk (budget cap 12).
- *   153.8  calculator = 143.4 + 10.4 calc island chunk (CalcIsland +
+ * Measured floors, this tree (re-measured 2026-07-28 after the 4b home router
+ * replaced the home stub — the pre-4b figures cited a 142.1 home floor that no
+ * longer exists; ceilings unchanged, only the measurements restated):
+ *   143.7  effective floor — form-less content routes (about, tools hub):
+ *          React+Next runtime, layout, MobileNav, fonts glue + segment router
+ *          glue (incl. the LeadFormLazy/CalcIslandLazy stubs). Legal sits at
+ *          143.8 (+0.16 shared lazy-boundary stubs; the 5a zero-JS assertion
+ *          pins all of these to the derived floor).
+ *   149.6  /[locale] home — the 4b home router carries the LeadCta form
+ *          island (≈ floor + 6.0 LeadForm chunk).
+ *   149.7  content route with LeadForm (contact, portal hubs); subpages
+ *          reach 149.9 (budget cap 12).
+ *   154.2  calculator = floor + 10.6 calc island chunk (CalcIsland +
  *          embedded ResultPanel LeadForm; budget cap 25).
+ *   156.9  heaviest listing report (4b fixture with gallery lightbox + map
+ *          facade islands landed).
  *
- * Derivations:
- *   base ........... 142.1 floor            + 12.9 headroom = 155
- *   content ........ 149.5 worst (w/ form)  + 12.5 headroom = 162
- *                    (form-less content routes sit ~19 under this ceiling; a
+ * Derivations (headroom = ceiling − measured):
+ *   base ........... 149.6 home w/ island   +  5.4 headroom = 155
+ *   content ........ 149.9 worst (w/ form)  + 12.1 headroom = 162
+ *                    (form-less content routes sit ~18 under this ceiling; a
  *                    single-island leak onto them stays below the class
  *                    ceiling — leak-scoping is owned by the lazy-boundary
- *                    imports and the island budget tests, not this gate)
- *   calculator ..... 153.8 floor+islands    + 13.2 headroom = 167
- *   listingReport .. 162 content ceiling + 10 gallery lightbox + 2 map facade
- *                    = 174. Phase 4's known islands per Part 8 island list;
- *                    re-measure and restate when those islands actually land.
+ *                    imports, the island budget tests, and the 5a zero-JS
+ *                    assertion, not the class ceiling)
+ *   calculator ..... 154.2 floor+islands    + 12.8 headroom = 167
+ *   listingReport .. 156.9 heaviest report  + 17.1 headroom = 174. The Phase 4
+ *                    islands this class budgeted for landed in 4b; measured.
  */
 export const CEILINGS = {
   base: 155,

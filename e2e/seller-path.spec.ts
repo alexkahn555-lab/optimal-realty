@@ -147,3 +147,58 @@ test('cross-locale segments 404', async ({ page }) => {
     expect(response?.status(), path).toBe(404);
   }
 });
+
+/**
+ * Dispatch 5b — the sellers answer is an unfilled placeholder marker AND the
+ * portal stays published (Part 3.2 report mode): the preview must serve a
+ * VISIBLE placeholder while the document, head, and JSON-LD stay free of raw
+ * TK_ strings, and the URLs stay on every discovery surface.
+ */
+test('sellers preview: visible answer placeholder, zero raw TK_ served', async ({
+  page,
+}) => {
+  for (const path of ['/en/sellers', '/es/vendedores'] as const) {
+    await page.goto(path);
+    await expect(page.getByText('⟨ TK · PORTAL_SELLERS_ANSWER ⟩')).toBeVisible();
+    const html = await page.content();
+    expect(/\bTK_/.test(html), `${path} served a raw TK_ marker`).toBe(false);
+  }
+});
+
+test('sellers meta description is the title, never a marker', async ({ page }) => {
+  const cases = [
+    { path: '/en/sellers', title: SELLERS_PORTAL.title.en },
+    { path: '/es/vendedores', title: SELLERS_PORTAL.title.es },
+  ] as const;
+  for (const { path, title } of cases) {
+    await page.goto(path);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      'content',
+      title
+    );
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+      'content',
+      title
+    );
+  }
+});
+
+test('sellers URLs stay on the discovery surfaces in both locales', async ({
+  page,
+}) => {
+  const sitemap = await (await page.request.get('/sitemap.xml')).text();
+  const llms = await (await page.request.get('/llms.txt')).text();
+  for (const url of ['/en/sellers', '/es/vendedores']) {
+    expect(sitemap, `sitemap.xml must carry ${url}`).toContain(url);
+    expect(llms, `llms.txt must carry ${url}`).toContain(url);
+  }
+});
+
+test('the home page sellers link stays live and resolves', async ({ page }) => {
+  await page.goto('/en');
+  await page.locator('a[href="/en/sellers"]').first().click();
+  await expect(page).toHaveURL('/en/sellers');
+  await expect(
+    page.getByRole('heading', { level: 1, name: SELLERS_PORTAL.answer.question.en })
+  ).toBeVisible();
+});

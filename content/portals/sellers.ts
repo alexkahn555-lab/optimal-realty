@@ -4,10 +4,10 @@ import type { Faq, Portal } from '@/lib/types';
  * SELLERS PORTAL — the Phase 3 proving portal (the other four are later phases).
  *
  * Structure authored in-house; prose that requires broker judgment is a
- * placeholder marker. The AnswerBlock below is assembled STRICTLY from confirmed facts
- * (licenses in config/entity.ts, service area, languages, what the net-proceeds
- * calculator computes) and is FLAGGED for client review in the completion
- * report. `slug` must match PORTAL_SEG in lib/seo/href.ts — enforced by test.
+ * placeholder marker. The answer prose is broker counsel (dispatch 5b): it is a
+ * placeholder marker until the client supplies it, and in report mode the
+ * portal still publishes with the placeholder rendered visibly (Part 3.2).
+ * `slug` must match PORTAL_SEG in lib/seo/href.ts — enforced by test.
  */
 
 export const SELLERS_PORTAL: Portal = {
@@ -19,23 +19,9 @@ export const SELLERS_PORTAL: Portal = {
       en: 'How do I sell a home in Miami-Dade County?',
       es: '¿Cómo vendo una vivienda en el condado de Miami-Dade?',
     },
-    // 51 words / confirmed facts only — FLAGGED for client review.
     answer: {
-      en:
-        'Optimal Realty lists and sells residential property across Miami-Dade ' +
-        'County, led by a Florida licensed real estate broker who is also a ' +
-        'state-certified appraiser and community association manager. Sellers get ' +
-        'pricing grounded in appraisal methodology, bilingual English–Spanish ' +
-        'service, and a net-proceeds calculator that itemizes the costs of ' +
-        'closing before you list.',
-      es:
-        'Optimal Realty lista y vende propiedades residenciales en todo el ' +
-        'condado de Miami-Dade, dirigida por un corredor de bienes raíces ' +
-        'licenciado en Florida que también es tasador certificado por el estado y ' +
-        'administrador de asociaciones comunitarias. Los vendedores reciben ' +
-        'precios fundamentados en metodología de tasación, servicio bilingüe en ' +
-        'inglés y español, y una calculadora de ganancia neta que detalla los ' +
-        'costos del cierre antes de listar.',
+      en: 'TK_PORTAL_SELLERS_ANSWER',
+      es: 'TK_PORTAL_SELLERS_ANSWER',
     },
     updated: '2026-07-26',
   },

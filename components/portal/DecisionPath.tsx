@@ -32,7 +32,7 @@ export function DecisionPath({
       <Heading level={2}>{t(UI.sections.decisionHeading, locale)}</Heading>
       <div className="mt-4">
         {isTK(decision) ? (
-          <PlaceholderTK id={decision.en} />
+          <PlaceholderTK id={decision.en.replace(TK, '')} />
         ) : (
           <Prose>{t(decision, locale)}</Prose>
         )}

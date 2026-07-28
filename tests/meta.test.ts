@@ -58,4 +58,51 @@ describe('metaFor()', () => {
     );
     expect(m.title).toBe('About');
   });
+
+  /**
+   * Dispatch 5b — a raw TK_ string must never reach a description or og tag.
+   * A TK description falls back to the entity title (the 4c sold-index
+   * fallback, now centralized here so every call site is covered).
+   */
+  describe('TK description fallback', () => {
+    const tkDescription = { en: 'TK_PORTAL_X_ANSWER', es: 'TK_PORTAL_X_ANSWER' };
+
+    it('falls back to the title in description AND og:description', () => {
+      for (const locale of ['en', 'es'] as const) {
+        const m = metaFor(
+          { id: 'about', title: { en: 'About', es: 'Nosotros' }, description: tkDescription },
+          locale
+        );
+        expect(m.description).toBe(locale === 'en' ? 'About' : 'Nosotros');
+        expect((m.openGraph as { description?: string }).description).toBe(
+          locale === 'en' ? 'About' : 'Nosotros'
+        );
+      }
+    });
+
+    it('a marker in ONE locale is unfilled — both locales fall back', () => {
+      const m = metaFor(
+        {
+          id: 'about',
+          title: { en: 'About', es: 'Nosotros' },
+          description: { en: 'Real prose.', es: 'TK_HALF_FILLED' },
+        },
+        'en'
+      );
+      expect(m.description).toBe('About');
+    });
+
+    it('no title to fall back to → the site name, never the marker', () => {
+      const m = metaFor({ id: 'home', description: tkDescription }, 'en');
+      expect(m.description).toBe('Optimal Realty');
+    });
+
+    it('emits no TK_ anywhere in the metadata object', () => {
+      const m = metaFor(
+        { id: 'about', title: { en: 'About', es: 'Nosotros' }, description: tkDescription },
+        'en'
+      );
+      expect(JSON.stringify(m)).not.toMatch(/\bTK_/);
+    });
+  });
 });

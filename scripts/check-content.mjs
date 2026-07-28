@@ -2,7 +2,12 @@
 /**
  * check-content.mjs — the TK_ gate. Build reference v2.0, Part 3.2.
  *
- * Runs prebuild on every deploy. Scans content/ and config/ for TK_ markers.
+ * Runs prebuild on every deploy. Scans content/, config/, components/ and app/
+ * for TK_ markers — Part 5.2: chrome is content and the same gate applies, so
+ * markers living in component/route files (invisible to the count and to
+ * strict mode before 5b) are weighed and blocked exactly like content/.
+ * lib/ and tests/ are NOT scanned: they reference the TK_ convention as code
+ * (regexes, fixtures), not as unfilled copy.
  *
  * MODES
  *   report  (default; all preview builds)
@@ -20,7 +25,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
-const SCAN_DIRS = ['content', 'config'];
+const SCAN_DIRS = ['content', 'config', 'components', 'app'];
 const TK_PATTERN = /\bTK_[A-Z0-9_]*/g;
 const STRICT = process.env.CONTENT_STRICT === '1';
 

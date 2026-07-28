@@ -57,6 +57,14 @@ describe('PortalTemplate', () => {
     expect(markup).toContain('"provider":{"@id"');
     expect(markup).not.toContain('"@type":"RealEstateAgent"');
   });
+
+  it('the TK answer renders as a visible placeholder (5b, Part 3.2)', () => {
+    expect(markup).toContain('⟨ TK · PORTAL_SELLERS_ANSWER ⟩');
+  });
+
+  it('the full document — prose, placeholders, JSON-LD — has no raw TK_ (5b)', () => {
+    expect(markup).not.toMatch(/\bTK_/);
+  });
 });
 
 describe('SubpageTemplate', () => {

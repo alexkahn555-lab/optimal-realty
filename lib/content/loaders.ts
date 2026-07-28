@@ -28,10 +28,12 @@ import { NET_PROCEEDS_FAQS, NET_PROCEEDS_TOOL } from '@/content/tools/net-procee
  * ============================================================================
  *
  * "Published" (reference status D3) means: the entity is marked published AND the
- * fields that make its page indexable pass the TK gate in BOTH locales. A page
- * whose answer still carries a `TK_` marker must never reach params, the sitemap,
- * nav, or llms.txt — an unfilled answer is not something to serve as structured
- * data or a crawlable URL. Drafts and stubs are invisible everywhere routing looks.
+ * fields that make its page indexable pass the TK gate in BOTH locales. Since 5b
+ * the ANSWER prose is mode-sensitive (Part 3.2): in report mode an unfilled
+ * answer publishes and ships visibly as PlaceholderTK (the preview is the
+ * discovery instrument); in strict mode it unpublishes — see answerClean. The
+ * marker itself never serves: meta falls back to the title (lib/seo/meta.ts) and
+ * JSON-LD strips it (pageGraph). Drafts and stubs stay invisible everywhere.
  *
  * Note the division of labor with the non-negotiables: a route may still SHIP with
  * empty `adviceIds` or a TK `decision`/`narrative` (those degrade to null or a
@@ -81,9 +83,26 @@ export function localizedClean(value: Localized): boolean {
   return !TK.test(value.en) && !TK.test(value.es);
 }
 
-/** The indexable surface of an AnswerBlock (H1 + answer prose) is TK-clean. */
+/**
+ * The indexable surface of an AnswerBlock, gated per Part 3.2 mode (5b):
+ *
+ *  - The QUESTION is the page's H1 and is structural — it gates publication in
+ *    every mode (a marker H1 is not a servable page).
+ *  - The ANSWER prose gates only in strict mode. In report mode (the default,
+ *    every preview) an unfilled answer publishes and renders VISIBLY as
+ *    PlaceholderTK — the preview with visible placeholders is the instrument
+ *    that gets the client to respond; unpublishing it (the pre-5b behavior)
+ *    404'd the very page the client needed to review.
+ *  - Strict retains the unpublish as defense in depth only: in practice
+ *    check-content.mjs fails the prebuild before next build can run, so this
+ *    branch never decides a production page's fate.
+ *
+ * The mode signal (CONTENT_STRICT) is read per call, matching check-content.mjs.
+ */
 function answerClean(answer: AnswerBlock): boolean {
-  return localizedClean(answer.question) && localizedClean(answer.answer);
+  if (!localizedClean(answer.question)) return false;
+  if (process.env.CONTENT_STRICT === '1') return localizedClean(answer.answer);
+  return true;
 }
 
 /* ---- Published accessors ------------------------------------------------- */

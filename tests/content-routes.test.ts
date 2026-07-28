@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   ALL_FAQS,
   publishedPortals,
@@ -9,7 +11,9 @@ import { SELLERS_PORTAL } from '@/content/portals/sellers';
 import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
 import { SELLING_PROCESS_SUBPAGE } from '@/content/subpages/selling-process';
 import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
+import { AnswerBlock } from '@/components/seo';
 import { href } from '@/lib/seo/href';
+import { metaFor } from '@/lib/seo/meta';
 
 /**
  * Content ↔ route-registry consistency. Slugs are route-table data living in
@@ -49,6 +53,62 @@ describe('content ↔ href registry consistency', () => {
       'sellers-selling-process',
     ]);
     expect(publishedTools().map((t) => t.id)).toEqual(['net-proceeds']);
+  });
+});
+
+/**
+ * Dispatch 5b — Part 3.2 mode-sensitive answer gate. The sellers answer is a
+ * TK_ placeholder marker (broker counsel), and the portal must STILL publish
+ * in report mode: the preview with the visible placeholder is the instrument
+ * that gets the client to respond. Strict mode retains the unpublish as
+ * defense in depth (unreachable in practice — check-content.mjs fails the
+ * prebuild first).
+ */
+describe('mode-sensitive answer publish gate (5b)', () => {
+  afterEach(() => {
+    delete process.env.CONTENT_STRICT;
+  });
+
+  it('the sellers answer IS a TK placeholder — the fixture this gate exists for', () => {
+    expect(SELLERS_PORTAL.answer.answer.en).toMatch(/^TK_/);
+    expect(SELLERS_PORTAL.answer.answer.es).toMatch(/^TK_/);
+  });
+
+  it('report mode (default): a TK-answer portal still publishes', () => {
+    expect(publishedPortals().map((p) => p.id)).toContain('sellers');
+  });
+
+  it('strict mode: the TK-answer portal unpublishes (defense in depth)', () => {
+    process.env.CONTENT_STRICT = '1';
+    expect(publishedPortals().map((p) => p.id)).not.toContain('sellers');
+    // Clean-answer entities are untouched by the mode switch.
+    expect(publishedSubpages().map((s) => s.id)).toEqual([
+      'sellers-home-valuation',
+      'sellers-selling-process',
+    ]);
+  });
+
+  it('the published TK answer renders as a visible placeholder, never raw prose', () => {
+    const markup = renderToStaticMarkup(
+      createElement(AnswerBlock, { block: SELLERS_PORTAL.answer, locale: 'en' })
+    );
+    expect(markup).toContain('PORTAL_SELLERS_ANSWER'); // ⟨ TK · PORTAL_SELLERS_ANSWER ⟩
+    expect(markup).not.toMatch(/\bTK_/);
+  });
+
+  it('the sellers meta description is the title, never a marker', () => {
+    for (const locale of ['en', 'es'] as const) {
+      const meta = metaFor(
+        {
+          id: 'portal.sellers',
+          title: SELLERS_PORTAL.title,
+          description: SELLERS_PORTAL.answer.answer,
+        },
+        locale
+      );
+      expect(meta.description).toBe(SELLERS_PORTAL.title[locale]);
+      expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
+    }
   });
 });
 
