@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { entityGraph, pageGraph, serviceNode } from '@/lib/seo/jsonld';
+import { entityGraph, pageGraph, serviceNode, webPageNode } from '@/lib/seo/jsonld';
+import { BUYERS_PORTAL } from '@/content/portals/buyers';
 import { SELLERS_PORTAL } from '@/content/portals/sellers';
 
 describe('entityGraph()', () => {
@@ -56,5 +57,54 @@ describe('serviceNode from a TK-answer portal (5b)', () => {
       expect(service.name).toBe(SELLERS_PORTAL.title[locale]);
       expect(service.serviceType).toBe(SELLERS_PORTAL.serviceSchema.serviceType);
     }
+  });
+});
+
+/**
+ * Dispatch 5c — the four new hubs carry TK title AND answer, so the Service
+ * node is built with an unfilled name/description on every preview, and the
+ * hub adds a WebPage node (Part 4.2). Both must strip to structural fields.
+ */
+describe('portal nodes from a TK-title portal (5c)', () => {
+  it('the real buyers portal carries a TK title and question — the live fixture', () => {
+    expect(BUYERS_PORTAL.title.en).toMatch(/^TK_/);
+    expect(BUYERS_PORTAL.answer.question.en).toMatch(/^TK_/);
+  });
+
+  it('serviceNode: name and description omitted, serviceType + provider survive', () => {
+    for (const locale of ['en', 'es'] as const) {
+      const url = `https://example.com/${locale}/buyers`;
+      const graph = pageGraph([serviceNode(BUYERS_PORTAL, url, locale)]);
+      const serialized = JSON.stringify(graph);
+      expect(serialized).not.toMatch(/\bTK_/);
+      const service = graph['@graph'][0] as Record<string, unknown>;
+      expect(service.name).toBeUndefined();
+      expect(service.description).toBeUndefined();
+      expect(service.serviceType).toBe(BUYERS_PORTAL.serviceSchema.serviceType);
+      expect((service.provider as Record<string, string>)['@id']).toContain(
+        '#agent'
+      );
+    }
+  });
+
+  it('webPageNode from TK name/description keeps structural fields only', () => {
+    const url = 'https://example.com/en/buyers';
+    const graph = pageGraph([
+      webPageNode(
+        BUYERS_PORTAL.title.en,
+        BUYERS_PORTAL.answer.answer.en,
+        url,
+        'en',
+        BUYERS_PORTAL.answer.updated
+      ),
+    ]);
+    const serialized = JSON.stringify(graph);
+    expect(serialized).not.toMatch(/\bTK_/);
+    const page = graph['@graph'][0] as Record<string, unknown>;
+    expect(page['@type']).toBe('WebPage');
+    expect(page.name).toBeUndefined();
+    expect(page.description).toBeUndefined();
+    expect(page.url).toBe(url);
+    expect(page.dateModified).toBe(BUYERS_PORTAL.answer.updated);
   });
 });

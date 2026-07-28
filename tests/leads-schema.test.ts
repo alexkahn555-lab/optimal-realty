@@ -98,12 +98,19 @@ describe('leadSubmissionSchema', () => {
     expect(
       leadSubmissionSchema.safeParse({ ...BASE, sourceType: 'booking' }).success
     ).toBe(false);
-    // Unpublished portal — only sellers is registered in Phase 3.
+    // 5c published every PortalId, so no portal VALUE is absent from the
+    // registry anymore (the pre-5c fixture here was portal:'buyers'). A
+    // portal CTA still rejects when it names no portal or smuggles a slug.
+    expect(
+      leadSubmissionSchema.safeParse({ ...BASE, sourceType: 'portal_cta' })
+        .success
+    ).toBe(false);
     expect(
       leadSubmissionSchema.safeParse({
         ...BASE,
         sourceType: 'portal_cta',
         portal: 'buyers',
+        sourceSlug: 'buyers',
       }).success
     ).toBe(false);
   });
@@ -123,6 +130,25 @@ describe('leadSubmissionSchema', () => {
         portal: 'sellers',
       }).success
     ).toBe(true);
+  });
+
+  it('accepts every portal hub CTA now published (5c)', () => {
+    for (const portal of [
+      'sellers',
+      'buyers',
+      'investors',
+      'landlords',
+      'tenants',
+    ] as const) {
+      expect(
+        leadSubmissionSchema.safeParse({
+          ...BASE,
+          sourceType: 'portal_cta',
+          portal,
+        }).success,
+        portal
+      ).toBe(true);
+    }
   });
 
   it('enforces UTM key, count, and value hygiene', () => {

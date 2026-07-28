@@ -105,4 +105,58 @@ describe('metaFor()', () => {
       expect(JSON.stringify(m)).not.toMatch(/\bTK_/);
     });
   });
+
+  /**
+   * Dispatch 5c — portal titles may themselves be unfilled (publishable in
+   * report mode). A TK title never fills the bare title, an og:title, or the
+   * description fallback chain — the page falls to the layout default.
+   */
+  describe('TK title fallback (5c)', () => {
+    const tkTitle = { en: 'TK_PORTAL_X_TITLE', es: 'TK_PORTAL_X_TITLE' };
+
+    it('never fills the bare title or og:title — layout default wins', () => {
+      const m = metaFor(
+        {
+          id: 'portal.buyers',
+          title: tkTitle,
+          description: { en: 'Real prose.', es: 'Prosa real.' },
+        },
+        'en'
+      );
+      expect(m.title).toBeUndefined();
+      expect((m.openGraph as { title?: string }).title).toBe('Optimal Realty');
+      expect(m.description).toBe('Real prose.');
+    });
+
+    it('TK title AND TK description → the site name, no TK_ anywhere', () => {
+      for (const locale of ['en', 'es'] as const) {
+        const m = metaFor(
+          {
+            id: 'portal.buyers',
+            title: tkTitle,
+            description: { en: 'TK_PORTAL_X_ANSWER', es: 'TK_PORTAL_X_ANSWER' },
+          },
+          locale
+        );
+        expect(m.title).toBeUndefined();
+        expect(m.description).toBe('Optimal Realty');
+        expect((m.openGraph as { description?: string }).description).toBe(
+          'Optimal Realty'
+        );
+        expect(JSON.stringify(m)).not.toMatch(/\bTK_/);
+      }
+    });
+
+    it('a marker in ONE title locale is unfilled — both locales fall back', () => {
+      const m = metaFor(
+        {
+          id: 'portal.buyers',
+          title: { en: 'Buyers', es: 'TK_HALF_FILLED_TITLE' },
+          description: { en: 'Real prose.', es: 'Prosa real.' },
+        },
+        'en'
+      );
+      expect(m.title).toBeUndefined();
+    });
+  });
 });

@@ -8,7 +8,10 @@ import type { Locale, Localized, Portal } from '@/lib/types';
  * DECISION PATH (Part 7.2 slot 6) — 3–5 steps on hairlines with mono numerals,
  * no boxes (Part 1.3). The `decision` line (the ONE decision this portal
  * supports) is broker-authored and gated to a placeholder until supplied; the
- * steps themselves are structural scaffolding and always render.
+ * steps themselves are structural scaffolding and always render. Step label
+ * and detail TEXT is broker counsel too (5c): the four remaining hubs ship
+ * them unfilled, so each renders through PlaceholderTK until supplied — the
+ * numbered scaffold stays, a raw marker never serves.
  */
 
 export interface DecisionPathProps {
@@ -39,7 +42,12 @@ export function DecisionPath({
       </div>
       <ol className="mt-6">
         {steps.map((step, index) => (
-          <li key={step.label.en} className="flex gap-6 border-b border-hair py-5">
+          // Key strips the marker prefix: React keys serialize into the RSC
+          // flight payload, which is served HTML — a raw marker never ships.
+          <li
+            key={step.label.en.replace(TK, '')}
+            className="flex gap-6 border-b border-hair py-5"
+          >
             <span
               aria-hidden="true"
               className="font-mono text-sm tabular-nums text-teal"
@@ -48,10 +56,18 @@ export function DecisionPath({
             </span>
             <div>
               <p className="font-display text-lg text-ink">
-                {t(step.label, locale)}
+                {isTK(step.label) ? (
+                  <PlaceholderTK id={step.label.en.replace(TK, '')} />
+                ) : (
+                  t(step.label, locale)
+                )}
               </p>
               <p className="mt-1 max-w-prose font-sans text-sm text-ink">
-                {t(step.detail, locale)}
+                {isTK(step.detail) ? (
+                  <PlaceholderTK id={step.detail.en.replace(TK, '')} />
+                ) : (
+                  t(step.detail, locale)
+                )}
               </p>
             </div>
           </li>

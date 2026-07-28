@@ -1,6 +1,6 @@
 import { ENTITY } from '@/config/entity';
 import { UI } from '@/content/ui-strings';
-import { publishedPortals } from '@/lib/content/loaders';
+import { portalLabel, publishedPortals } from '@/lib/content/loaders';
 import { t } from '@/lib/i18n';
 import { href } from '@/lib/seo/href';
 import type { Locale, RouteId } from '@/lib/types';
@@ -14,9 +14,11 @@ export interface SiteHeaderProps {
 
 export function SiteHeader({ locale, routeId }: SiteHeaderProps): JSX.Element {
   const portals = publishedPortals();
+  // portalLabel (5c): an unfilled portal title publishes in report mode; nav
+  // degrades to the structural slug, never a raw marker.
   const navItems = portals.map((portal) => ({
     id: (`portal.${portal.id}`) as RouteId,
-    label: t(portal.title, locale),
+    label: t(portalLabel(portal), locale),
   }));
 
   return (

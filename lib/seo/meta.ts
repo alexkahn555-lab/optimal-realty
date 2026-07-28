@@ -67,7 +67,10 @@ export function metaFor(input: MetaInput, locale: Locale): Metadata {
     descriptionSource ? descriptionSource[locale] : SITE_NAME
   );
 
-  const pageTitle = input.title ? input.title[locale] : undefined;
+  // 5c: portal titles may themselves be unfilled (publishable in report mode
+  // like the answer). A TK title never fills the %s template or an og:title —
+  // the page falls to the layout default (bare site name).
+  const pageTitle = tkClean(input.title) ? input.title[locale] : undefined;
   const ogTitle = pageTitle ? TITLE_TEMPLATE.replace('%s', pageTitle) : SITE_NAME;
 
   return {

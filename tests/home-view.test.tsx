@@ -48,7 +48,9 @@ describe('HomeView', () => {
     for (const [seg, label] of [
       ['compradores', 'Compradores'],
       ['inversionistas', 'Inversionistas'],
-      ['arrendadores', 'Arrendadores'],
+      // URL segment per the 5c route map ('propietarios'); the home view's
+      // own label is untouched (label migration is out of 5c scope).
+      ['propietarios', 'Arrendadores'],
       ['inquilinos', 'Inquilinos'],
     ]) {
       expect(es).toContain(`href="/es/${seg}"`);

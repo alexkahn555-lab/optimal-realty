@@ -3,6 +3,7 @@ import { SITE_ORIGIN } from '@/config/origin';
 import {
   activeListings,
   isDiscoverable,
+  portalLabel,
   publishedPortals,
   publishedSubpages,
   publishedTools,
@@ -26,7 +27,11 @@ export function GET(): Response {
     .join(', ');
 
   const lines = [
-    ...publishedPortals().map((p) => line(p.title.en, `portal.${p.id}` as RouteId)),
+    // portalLabel (5c): unfilled titles degrade to the structural slug —
+    // llms.txt is a discovery surface and never carries a raw marker.
+    ...publishedPortals().map((p) =>
+      line(portalLabel(p).en, `portal.${p.id}` as RouteId)
+    ),
     ...publishedSubpages().map((s) => line(s.title.en, `subpage.${s.id}` as RouteId)),
     line('Tools', 'tools'),
     ...publishedTools().map((tool) =>

@@ -37,6 +37,19 @@ describe('href()', () => {
     expect(href('contact', 'es')).toBe('/es/contacto');
   });
 
+  it('the four remaining portal hubs round-trip both locales (5c route map)', () => {
+    expect(href('portal.buyers', 'en')).toBe('/en/buyers');
+    expect(href('portal.buyers', 'es')).toBe('/es/compradores');
+    expect(href('portal.investors', 'en')).toBe('/en/investors');
+    expect(href('portal.investors', 'es')).toBe('/es/inversionistas');
+    // ES slug per the 5c dispatch route map (supersedes the Phase 1 judgment
+    // slug 'arrendadores').
+    expect(href('portal.landlords', 'en')).toBe('/en/landlords');
+    expect(href('portal.landlords', 'es')).toBe('/es/propietarios');
+    expect(href('portal.tenants', 'en')).toBe('/en/tenants');
+    expect(href('portal.tenants', 'es')).toBe('/es/inquilinos');
+  });
+
   it('legal + sold children', () => {
     expect(href('legal.privacy', 'es')).toBe('/es/legal/privacidad');
     expect(href('listings.sold', 'es')).toBe('/es/propiedades/vendidas');

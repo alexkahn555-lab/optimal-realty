@@ -11,7 +11,11 @@ import type {
 import { LISTING_L_2026_001 } from '@/content/listings/l-2026-001';
 import { LISTING_L_2026_002 } from '@/content/listings/l-2026-002';
 import { LISTING_L_2026_003 } from '@/content/listings/l-2026-003';
+import { BUYERS_PORTAL } from '@/content/portals/buyers';
+import { INVESTORS_PORTAL } from '@/content/portals/investors';
+import { LANDLORDS_PORTAL } from '@/content/portals/landlords';
 import { SELLERS_FAQS, SELLERS_PORTAL } from '@/content/portals/sellers';
+import { TENANTS_PORTAL } from '@/content/portals/tenants';
 import {
   HOME_VALUATION_FAQS,
   HOME_VALUATION_SUBPAGE,
@@ -29,9 +33,10 @@ import { NET_PROCEEDS_FAQS, NET_PROCEEDS_TOOL } from '@/content/tools/net-procee
  *
  * "Published" (reference status D3) means: the entity is marked published AND the
  * fields that make its page indexable pass the TK gate in BOTH locales. Since 5b
- * the ANSWER prose is mode-sensitive (Part 3.2): in report mode an unfilled
- * answer publishes and ships visibly as PlaceholderTK (the preview is the
- * discovery instrument); in strict mode it unpublishes — see answerClean. The
+ * the ANSWER prose — and since 5c the QUESTION and portal TITLE — are
+ * mode-sensitive (Part 3.2): in report mode an unfilled field publishes and
+ * ships visibly as PlaceholderTK (the preview is the discovery instrument);
+ * in strict mode it unpublishes — see answerClean/titleClean. The
  * marker itself never serves: meta falls back to the title (lib/seo/meta.ts) and
  * JSON-LD strips it (pageGraph). Drafts and stubs stay invisible everywhere.
  *
@@ -47,8 +52,15 @@ import { NET_PROCEEDS_FAQS, NET_PROCEEDS_TOOL } from '@/content/tools/net-procee
  * changes.
  */
 
-/* ---- Source collections (Phase 3: seller path · Phase 4a: listings) ------- */
-const PORTALS: readonly Portal[] = [SELLERS_PORTAL];
+/* ---- Source collections (Phase 3: seller path · Phase 4a: listings ·
+ * Phase 5c: the four remaining portal hubs, in route-map order) ------------- */
+const PORTALS: readonly Portal[] = [
+  SELLERS_PORTAL,
+  BUYERS_PORTAL,
+  INVESTORS_PORTAL,
+  LANDLORDS_PORTAL,
+  TENANTS_PORTAL,
+];
 const SUBPAGES: readonly PortalSubpage[] = [
   HOME_VALUATION_SUBPAGE,
   SELLING_PROCESS_SUBPAGE,
@@ -84,15 +96,16 @@ export function localizedClean(value: Localized): boolean {
 }
 
 /**
- * The indexable surface of an AnswerBlock, gated per Part 3.2 mode (5b):
+ * The indexable surface of an AnswerBlock, gated per Part 3.2 mode (5b/5c):
  *
- *  - The QUESTION is the page's H1 and is structural — it gates publication in
- *    every mode (a marker H1 is not a servable page).
- *  - The ANSWER prose gates only in strict mode. In report mode (the default,
- *    every preview) an unfilled answer publishes and renders VISIBLY as
- *    PlaceholderTK — the preview with visible placeholders is the instrument
- *    that gets the client to respond; unpublishing it (the pre-5b behavior)
- *    404'd the very page the client needed to review.
+ *  - Both the QUESTION (the page's H1) and the ANSWER prose gate only in
+ *    strict mode. In report mode (the default, every preview) an unfilled
+ *    question or answer publishes and renders VISIBLY as PlaceholderTK — the
+ *    preview with visible placeholders is the instrument that gets the client
+ *    to respond; unpublishing (the pre-5b behavior for the answer, pre-5c for
+ *    the question) 404'd the very page the client needed to review. 5c extends
+ *    the 5b answer rule to the question because the four remaining portal hubs
+ *    ship with an unfilled question and must still resolve in preview.
  *  - Strict retains the unpublish as defense in depth only: in practice
  *    check-content.mjs fails the prebuild before next build can run, so this
  *    branch never decides a production page's fate.
@@ -100,9 +113,32 @@ export function localizedClean(value: Localized): boolean {
  * The mode signal (CONTENT_STRICT) is read per call, matching check-content.mjs.
  */
 function answerClean(answer: AnswerBlock): boolean {
-  if (!localizedClean(answer.question)) return false;
-  if (process.env.CONTENT_STRICT === '1') return localizedClean(answer.answer);
+  if (process.env.CONTENT_STRICT === '1') {
+    return localizedClean(answer.question) && localizedClean(answer.answer);
+  }
   return true;
+}
+
+/**
+ * Portal titles are client-facing naming still under review (5c) and follow
+ * the same mode split: report mode publishes an unfilled title (nav, crumbs
+ * and llms.txt fall back to `portalLabel`; metaFor falls back to the site
+ * name), strict mode unpublishes. Scoped to portals — subpage and tool titles
+ * remain hard-gated until a dispatch says otherwise.
+ */
+function titleClean(title: Localized): boolean {
+  if (process.env.CONTENT_STRICT === '1') return localizedClean(title);
+  return true;
+}
+
+/**
+ * Display label for a portal wherever its title is rendered as chrome (site
+ * nav, breadcrumbs, llms.txt): the title when filled, else the structural
+ * localized slug — route-table data, never a raw marker and never
+ * agent-authored prose. Centralized so every render site degrades identically.
+ */
+export function portalLabel(portal: Portal): Localized {
+  return localizedClean(portal.title) ? portal.title : portal.slug;
 }
 
 /* ---- Published accessors ------------------------------------------------- */
@@ -112,7 +148,7 @@ export function publishedPortals(): Portal[] {
     (p) =>
       p.status === 'published' &&
       localizedClean(p.slug) &&
-      localizedClean(p.title) &&
+      titleClean(p.title) &&
       answerClean(p.answer)
   );
 }

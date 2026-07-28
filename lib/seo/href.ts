@@ -32,7 +32,9 @@ const PORTAL_SEG: Record<PortalId, LocalizedSeg> = {
   sellers: { en: 'sellers', es: 'vendedores' },
   buyers: { en: 'buyers', es: 'compradores' },
   investors: { en: 'investors', es: 'inversionistas' },
-  landlords: { en: 'landlords', es: 'arrendadores' },
+  // ES slug per the 5c dispatch route map ('propietarios'; the Phase 1
+  // judgment slug was 'arrendadores').
+  landlords: { en: 'landlords', es: 'propietarios' },
   tenants: { en: 'tenants', es: 'inquilinos' },
 };
 

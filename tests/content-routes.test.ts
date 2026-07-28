@@ -3,11 +3,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   ALL_FAQS,
+  portalLabel,
   publishedPortals,
   publishedSubpages,
   publishedTools,
 } from '@/lib/content/loaders';
+import { BUYERS_PORTAL } from '@/content/portals/buyers';
+import { INVESTORS_PORTAL } from '@/content/portals/investors';
+import { LANDLORDS_PORTAL } from '@/content/portals/landlords';
 import { SELLERS_PORTAL } from '@/content/portals/sellers';
+import { TENANTS_PORTAL } from '@/content/portals/tenants';
 import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
 import { SELLING_PROCESS_SUBPAGE } from '@/content/subpages/selling-process';
 import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
@@ -21,10 +26,35 @@ import { metaFor } from '@/lib/seo/meta';
  * would publish a URL the router can never serve — caught HERE.
  */
 
+const ALL_PORTALS = [
+  SELLERS_PORTAL,
+  BUYERS_PORTAL,
+  INVESTORS_PORTAL,
+  LANDLORDS_PORTAL,
+  TENANTS_PORTAL,
+] as const;
+
+const NEW_PORTALS = [
+  BUYERS_PORTAL,
+  INVESTORS_PORTAL,
+  LANDLORDS_PORTAL,
+  TENANTS_PORTAL,
+] as const;
+
 describe('content ↔ href registry consistency', () => {
   it('sellers portal slug matches PORTAL_SEG', () => {
     expect(href('portal.sellers', 'en')).toBe(`/en/${SELLERS_PORTAL.slug.en}`);
     expect(href('portal.sellers', 'es')).toBe(`/es/${SELLERS_PORTAL.slug.es}`);
+  });
+
+  it('every portal slug matches PORTAL_SEG in both locales (5c)', () => {
+    for (const portal of ALL_PORTALS) {
+      for (const locale of ['en', 'es'] as const) {
+        expect(href(`portal.${portal.id}`, locale)).toBe(
+          `/${locale}/${portal.slug[locale]}`
+        );
+      }
+    }
   });
 
   it('subpage slugs match SUBPAGE_SEG (portal-parented)', () => {
@@ -47,7 +77,15 @@ describe('content ↔ href registry consistency', () => {
   });
 
   it('the seller path is published (the TK gate passes on indexable surfaces)', () => {
-    expect(publishedPortals().map((p) => p.id)).toEqual(['sellers']);
+    // 5c: all five hubs publish in report mode — sellers plus the four
+    // registered by this dispatch, in route-map order.
+    expect(publishedPortals().map((p) => p.id)).toEqual([
+      'sellers',
+      'buyers',
+      'investors',
+      'landlords',
+      'tenants',
+    ]);
     expect(publishedSubpages().map((s) => s.id)).toEqual([
       'sellers-home-valuation',
       'sellers-selling-process',
@@ -108,6 +146,67 @@ describe('mode-sensitive answer publish gate (5b)', () => {
       );
       expect(meta.description).toBe(SELLERS_PORTAL.title[locale]);
       expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
+    }
+  });
+});
+
+/**
+ * Dispatch 5c — Part 3.2 mode split extended to the QUESTION (the H1) and the
+ * portal TITLE. The four remaining hubs ship every prose field as a TK_
+ * placeholder marker and must STILL publish in report mode; strict mode
+ * retains the unpublish as defense in depth (check-content.mjs fails the
+ * prebuild first).
+ */
+describe('mode-sensitive question/title publish gate (5c)', () => {
+  afterEach(() => {
+    delete process.env.CONTENT_STRICT;
+  });
+
+  it('the four new hubs carry TK question, answer and title — the live fixtures', () => {
+    for (const portal of NEW_PORTALS) {
+      for (const locale of ['en', 'es'] as const) {
+        expect(portal.answer.question[locale]).toMatch(/^TK_/);
+        expect(portal.answer.answer[locale]).toMatch(/^TK_/);
+        expect(portal.title[locale]).toMatch(/^TK_/);
+        expect(portal.decision[locale]).toMatch(/^TK_/);
+      }
+    }
+  });
+
+  it('report mode (default): all four TK-question hubs publish', () => {
+    const ids = publishedPortals().map((p) => p.id);
+    for (const portal of NEW_PORTALS) expect(ids).toContain(portal.id);
+  });
+
+  it('strict mode: every TK-surfaced portal unpublishes (defense in depth)', () => {
+    process.env.CONTENT_STRICT = '1';
+    expect(publishedPortals()).toEqual([]);
+  });
+
+  it('portalLabel degrades an unfilled title to the structural slug', () => {
+    for (const portal of NEW_PORTALS) {
+      expect(portalLabel(portal)).toEqual(portal.slug);
+    }
+    // A filled title is used verbatim — sellers is the live clean fixture.
+    expect(portalLabel(SELLERS_PORTAL)).toEqual(SELLERS_PORTAL.title);
+  });
+
+  it('metaFor for each new hub falls to the site name — never a marker', () => {
+    for (const portal of NEW_PORTALS) {
+      for (const locale of ['en', 'es'] as const) {
+        const meta = metaFor(
+          {
+            id: `portal.${portal.id}`,
+            title: portal.title,
+            description: portal.answer.answer,
+          },
+          locale
+        );
+        expect(meta.title).toBeUndefined();
+        expect(meta.description).toBe('Optimal Realty');
+        expect((meta.openGraph as { title?: string }).title).toBe('Optimal Realty');
+        expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
+      }
     }
   });
 });
