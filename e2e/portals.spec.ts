@@ -107,6 +107,113 @@ for (const hub of HUBS) {
   });
 }
 
+/**
+ * Dispatch 5d — the three remaining subpages, fully-TK, on the shared
+ * subpage template in both locales.
+ */
+const SUBPAGES = [
+  {
+    id: 'buyers-first-time-buyer-programs',
+    portal: 'buyers',
+    intent: 'buy',
+    marker: 'SUBPAGE_FIRST_TIME_BUYER_PROGRAMS',
+    paths: {
+      en: '/en/buyers/first-time-buyer-programs',
+      es: '/es/compradores/programas-para-compradores-primerizos',
+    },
+  },
+  {
+    id: 'investors-1031-exchange',
+    portal: 'investors',
+    intent: 'invest',
+    marker: 'SUBPAGE_1031_EXCHANGE',
+    paths: {
+      en: '/en/investors/1031-exchange',
+      es: '/es/inversionistas/intercambio-1031',
+    },
+  },
+  {
+    id: 'landlords-property-management',
+    portal: 'landlords',
+    intent: 'lease-out',
+    marker: 'SUBPAGE_PROPERTY_MANAGEMENT',
+    paths: {
+      en: '/en/landlords/property-management',
+      es: '/es/propietarios/administracion-de-propiedades',
+    },
+  },
+] as const;
+
+for (const sub of SUBPAGES) {
+  for (const locale of ['en', 'es'] as const) {
+    test(`${sub.id} ${locale}: visible placeholders, site-name head, zero raw TK_ served`, async ({
+      page,
+    }) => {
+      await page.goto(sub.paths[locale]);
+      await expect(
+        page.getByRole('heading', {
+          level: 1,
+          name: `⟨ TK · ${sub.marker}_QUESTION ⟩`,
+        })
+      ).toBeVisible();
+      await expect(
+        page.getByText(`⟨ TK · ${sub.marker}_ANSWER ⟩`)
+      ).toBeVisible();
+      expect(await page.title()).toBe(SITE_NAME);
+      await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+        'content',
+        SITE_NAME
+      );
+      const html = await page.content();
+      expect(
+        /\bTK_/.test(html),
+        `${sub.paths[locale]} served a raw TK_ marker`
+      ).toBe(false);
+    });
+  }
+
+  test(`${sub.id}: LeadForm posts {portal_cta, ${sub.portal}, ${sub.intent}} to a route-level mock`, async ({
+    page,
+  }) => {
+    let submission: Record<string, unknown> | null = null;
+    await page.route('**/api/leads', async (route) => {
+      submission = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'e2e-mock-id' }),
+      });
+    });
+
+    await page.goto(sub.paths.en);
+    await page.locator('#lead-full-name').fill('Test Person');
+    await page.locator('#lead-email').fill('person@example.com');
+    await page.getByRole('button', { name: UI.form.submit.en }).click();
+    await expect(page.getByText(UI.form.successHeading.en)).toBeVisible();
+
+    expect(submission).not.toBeNull();
+    const body = submission as unknown as Record<string, unknown>;
+    expect(body.sourceType).toBe('portal_cta');
+    expect(body.portal).toBe(sub.portal);
+    expect(body.intent).toBe(sub.intent);
+    expect(String(body.route)).toBe(sub.paths.en);
+  });
+}
+
+test('cross-locale subpage segments 404 (5d)', async ({ page }) => {
+  for (const path of [
+    '/en/buyers/programas-para-compradores-primerizos',
+    '/es/compradores/first-time-buyer-programs',
+    '/en/investors/intercambio-1031',
+    '/es/inversionistas/1031-exchange',
+    '/en/landlords/administracion-de-propiedades',
+    '/es/propietarios/property-management',
+  ]) {
+    const response = await page.goto(path);
+    expect(response?.status(), path).toBe(404);
+  }
+});
+
 test('all eight hub URLs sit on both discovery surfaces — which stay marker-free', async ({
   page,
 }) => {
@@ -121,6 +228,20 @@ test('all eight hub URLs sit on both discovery surfaces — which stay marker-fr
   }
   expect(/\bTK_/.test(sitemap), 'sitemap.xml carries a raw TK_ marker').toBe(false);
   expect(/\bTK_/.test(llms), 'llms.txt carries a raw TK_ marker').toBe(false);
+});
+
+test('all six subpage URLs sit on both discovery surfaces (5d)', async ({
+  page,
+}) => {
+  const sitemap = await (await page.request.get('/sitemap.xml')).text();
+  const llms = await (await page.request.get('/llms.txt')).text();
+  for (const sub of SUBPAGES) {
+    for (const locale of ['en', 'es'] as const) {
+      const url = sub.paths[locale];
+      expect(sitemap, `sitemap.xml must carry ${url}`).toContain(url);
+      expect(llms, `llms.txt must carry ${url}`).toContain(url);
+    }
+  }
 });
 
 test('the four home page links resolve in both locales (the 4b 404s are gone)', async ({

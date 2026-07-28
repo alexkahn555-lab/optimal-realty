@@ -63,10 +63,12 @@ describe('HomeView', () => {
     expect(en).toContain('Which real estate calculators does Optimal Realty offer?');
   });
 
-  it('features the active fixtures and links their reports', () => {
-    expect(en).toContain('/en/listings/100-fixture-boulevard-coral-gables');
-    expect(en).toContain('/en/listings/fixture-condo-miami-33131');
-    // The sold fixture is not "featured" inventory.
+  it('the featured rail renders null — fixtures never sit in a proof position (5d inversion)', () => {
+    // INVERTED by dispatch 5d (explicitly sanctioned): the rail previously
+    // asserted the active fixtures rendered here. 4c's discovery rule now
+    // extends to proof rails; real listings re-light this slot.
+    expect(en).not.toContain('100-fixture-boulevard-coral-gables');
+    expect(en).not.toContain('fixture-condo-miami-33131');
     expect(en).not.toContain('300-example-court');
   });
 

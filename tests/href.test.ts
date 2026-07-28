@@ -78,4 +78,25 @@ describe('href()', () => {
     );
     expect(() => href('subpage.unknown', 'en')).toThrow();
   });
+
+  it('the three remaining portal subpages round-trip both locales (5d route map)', () => {
+    expect(href('subpage.buyers-first-time-buyer-programs', 'en')).toBe(
+      '/en/buyers/first-time-buyer-programs'
+    );
+    expect(href('subpage.buyers-first-time-buyer-programs', 'es')).toBe(
+      '/es/compradores/programas-para-compradores-primerizos'
+    );
+    expect(href('subpage.investors-1031-exchange', 'en')).toBe(
+      '/en/investors/1031-exchange'
+    );
+    expect(href('subpage.investors-1031-exchange', 'es')).toBe(
+      '/es/inversionistas/intercambio-1031'
+    );
+    expect(href('subpage.landlords-property-management', 'en')).toBe(
+      '/en/landlords/property-management'
+    );
+    expect(href('subpage.landlords-property-management', 'es')).toBe(
+      '/es/propietarios/administracion-de-propiedades'
+    );
+  });
 });

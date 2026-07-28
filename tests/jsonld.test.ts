@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { entityGraph, pageGraph, serviceNode, webPageNode } from '@/lib/seo/jsonld';
+import {
+  articleNode,
+  entityGraph,
+  pageGraph,
+  serviceNode,
+  webPageNode,
+} from '@/lib/seo/jsonld';
 import { BUYERS_PORTAL } from '@/content/portals/buyers';
 import { SELLERS_PORTAL } from '@/content/portals/sellers';
+import { FIRST_TIME_BUYER_PROGRAMS_SUBPAGE } from '@/content/subpages/first-time-buyer-programs';
 
 describe('entityGraph()', () => {
   it('emits no TK_ marker (en and es)', () => {
@@ -106,5 +113,42 @@ describe('portal nodes from a TK-title portal (5c)', () => {
     expect(page.description).toBeUndefined();
     expect(page.url).toBe(url);
     expect(page.dateModified).toBe(BUYERS_PORTAL.answer.updated);
+  });
+});
+
+/**
+ * Dispatch 5d — the subpage Article node built from a fully-TK subpage
+ * (Part 4.2): headline/description strip away, the author reference to the
+ * #raul Person node and dateModified survive, the agent is never redeclared.
+ */
+describe('articleNode from a TK-title subpage (5d)', () => {
+  it('the real buyers subpage carries TK title and question — the live fixture', () => {
+    expect(FIRST_TIME_BUYER_PROGRAMS_SUBPAGE.title.en).toMatch(/^TK_/);
+    expect(FIRST_TIME_BUYER_PROGRAMS_SUBPAGE.answer.question.en).toMatch(/^TK_/);
+  });
+
+  it('strips headline/description, keeps author → #raul and dateModified', () => {
+    for (const locale of ['en', 'es'] as const) {
+      const url = `https://example.com/${locale}/buyers/first-time-buyer-programs`;
+      const graph = pageGraph([
+        articleNode(FIRST_TIME_BUYER_PROGRAMS_SUBPAGE, url, locale),
+      ]);
+      const serialized = JSON.stringify(graph);
+      expect(serialized).not.toMatch(/\bTK_/);
+      const article = graph['@graph'][0] as Record<string, unknown>;
+      expect(article['@type']).toBe('Article');
+      expect(article.headline).toBeUndefined();
+      expect(article.description).toBeUndefined();
+      expect((article.author as Record<string, string>)['@id']).toContain(
+        '#raul'
+      );
+      expect((article.publisher as Record<string, string>)['@id']).toContain(
+        '#agent'
+      );
+      expect(article.dateModified).toBe(
+        FIRST_TIME_BUYER_PROGRAMS_SUBPAGE.answer.updated
+      );
+      expect(serialized).not.toContain('"@type":"RealEstateAgent"');
+    }
   });
 });

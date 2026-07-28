@@ -1,5 +1,6 @@
 import { SITE_ORIGIN } from '@/config/origin';
 import { UI } from '@/content/ui-strings';
+import { portalLabel } from '@/lib/content/loaders';
 import { t } from '@/lib/i18n';
 import { href } from '@/lib/seo/href';
 import { articleNode, pageGraph } from '@/lib/seo/jsonld';
@@ -8,6 +9,7 @@ import {
   Breadcrumbs,
   FaqSection,
   JsonLd,
+  PlaceholderTK,
   buildFaqPageNode,
   type ResolvedFaq,
 } from '@/components/seo';
@@ -16,6 +18,7 @@ import type {
   AdviceSection,
   LeadIntent,
   Locale,
+  Localized,
   Portal,
   PortalSubpage,
   ToolDef,
@@ -33,7 +36,19 @@ import { ToolRack } from './ToolRack';
  *
  * FAQ rule (Part 4.2): the caller resolves faqs from ids NOT already on the
  * portal hub — a question must appear in exactly one FAQPage node site-wide.
+ *
+ * 5d: an unfilled QUESTION publishes in report mode (Part 3.2, the 5c portal
+ * rule extended to subpages), so the H1 renders through PlaceholderTK and
+ * both crumb labels degrade via portalLabel — a raw marker never serves.
  */
+
+const TK = /\bTK_/;
+const isTK = (value: Localized): boolean => TK.test(value.en) || TK.test(value.es);
+
+/** Marker id for PlaceholderTK, prefix dropped (the 4b convention). */
+function placeholderId(value: Localized): string {
+  return (TK.test(value.en) ? value.en : value.es).replace(TK, '');
+}
 
 export interface SubpageTemplateProps {
   subpage: PortalSubpage;
@@ -70,12 +85,18 @@ export function SubpageTemplate({
         <Breadcrumbs
           items={[
             { id: 'home', label: UI.breadcrumb.home },
-            { id: `portal.${portal.id}`, label: portal.title },
-            { id: `subpage.${subpage.id}`, label: subpage.title },
+            { id: `portal.${portal.id}`, label: portalLabel(portal) },
+            { id: `subpage.${subpage.id}`, label: portalLabel(subpage) },
           ]}
           locale={locale}
         />
-        <Heading level={1}>{t(subpage.answer.question, locale)}</Heading>
+        <Heading level={1}>
+          {isTK(subpage.answer.question) ? (
+            <PlaceholderTK id={placeholderId(subpage.answer.question)} />
+          ) : (
+            t(subpage.answer.question, locale)
+          )}
+        </Heading>
         <AnswerBlock block={subpage.answer} locale={locale} />
 
         <AdviceList advice={advice} locale={locale} />

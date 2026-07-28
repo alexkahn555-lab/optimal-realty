@@ -1,16 +1,19 @@
 import { UI } from '@/content/ui-strings';
 import { t } from '@/lib/i18n';
 import { href } from '@/lib/seo/href';
-import { publishedListings } from '@/lib/content/loaders';
+import { isDiscoverable, publishedListings } from '@/lib/content/loaders';
 import { Heading } from '@/components/primitives';
 import type { Locale, ListingStatus } from '@/lib/types';
 
 /**
- * RELATED LISTINGS (Part 7.2 slot 7) — the portal's featured-listings rail.
- * Renders NULL when the registry has nothing matching the mode, which is every
- * render this phase (no listings exist until Phase 4); the selection logic is
- * real so Phase 4 content lights it up without touching this file. Full
- * listing cards belong to components/listing/** (Phase 4) — this slot links.
+ * RELATED LISTINGS (Part 7.2 slot 7) — the featured-listings proof rail.
+ * Renders NULL when nothing matches the mode. Demonstration fixtures are
+ * EXCLUDED here (5d, extending 4c): a rail on a hub, subpage or the home page
+ * is where proof of a real deal sits, and a fabricated listing or closed
+ * transaction may not occupy that position. A fixture stays visible on the
+ * listings index and on its own page, where it carries its banner. Real
+ * listings light this rail up without touching this file. Full listing cards
+ * belong to components/listing/** (Phase 4) — this slot links.
  */
 
 export interface RelatedListingsProps {
@@ -31,6 +34,7 @@ export function RelatedListings({
   locale,
 }: RelatedListingsProps): JSX.Element | null {
   const listings = publishedListings()
+    .filter(isDiscoverable)
     .filter((listing) => MODE_STATUSES[mode].includes(listing.status))
     .slice(0, limit);
   if (listings.length === 0) return null;

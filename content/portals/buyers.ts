@@ -54,7 +54,7 @@ export const BUYERS_PORTAL: Portal = {
     },
   ],
   toolIds: [], // buyers calculators do not exist yet — 5d+ wires the rack
-  subpageIds: [], // 5d adds them
+  subpageIds: ['buyers-first-time-buyer-programs'],
   adviceIds: [], // client counsel never blocks a route — AdviceList renders null
   faqIds: [],
   featuredListings: { mode: 'active', limit: 3 },

@@ -50,7 +50,7 @@ export const INVESTORS_PORTAL: Portal = {
     },
   ],
   toolIds: [], // investor calculators do not exist yet — 5d+ wires the rack
-  subpageIds: [], // 5d adds them
+  subpageIds: ['investors-1031-exchange'],
   adviceIds: [], // client counsel never blocks a route — AdviceList renders null
   faqIds: [],
   featuredListings: { mode: 'sold', limit: 3 },

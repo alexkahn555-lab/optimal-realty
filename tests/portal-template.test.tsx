@@ -6,9 +6,12 @@ import { INVESTORS_PORTAL } from '@/content/portals/investors';
 import { LANDLORDS_PORTAL } from '@/content/portals/landlords';
 import { SELLERS_PORTAL } from '@/content/portals/sellers';
 import { TENANTS_PORTAL } from '@/content/portals/tenants';
+import { EXCHANGE_1031_SUBPAGE } from '@/content/subpages/1031-exchange';
+import { FIRST_TIME_BUYER_PROGRAMS_SUBPAGE } from '@/content/subpages/first-time-buyer-programs';
 import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
+import { PROPERTY_MANAGEMENT_SUBPAGE } from '@/content/subpages/property-management';
 import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
-import { PortalTemplate } from '@/components/portal/PortalTemplate';
+import { PORTAL_INTENT, PortalTemplate } from '@/components/portal/PortalTemplate';
 import { SubpageTemplate } from '@/components/portal/SubpageTemplate';
 
 /**
@@ -62,13 +65,12 @@ describe('PortalTemplate', () => {
     expect(markup).not.toContain(UI.sections.faqHeading.en);
   });
 
-  it('featured listings lit up when Phase 4a registered active listings', () => {
-    // Phase 1–3 this slot rendered null; the fixtures now populate it with
-    // links into the listing reports (RelatedListings untouched, as designed).
-    expect(markup).toContain(UI.sections.featuredListings.en);
-    expect(markup).toContain(
-      'href="/en/listings/100-fixture-boulevard-coral-gables"'
-    );
+  it('the proof rail renders null while only fixtures exist (5d inversion)', () => {
+    // INVERTED by dispatch 5d (explicitly sanctioned): 4c's discovery rule
+    // extends to proof rails — a demonstration listing never sits where
+    // proof of a real deal sits. Real listings re-light this slot.
+    expect(markup).not.toContain(UI.sections.featuredListings.en);
+    expect(markup).not.toContain('100-fixture-boulevard-coral-gables');
   });
 
   it('Service JSON-LD references #agent and never redeclares it', () => {
@@ -105,13 +107,13 @@ describe('PortalTemplate', () => {
  */
 describe('PortalTemplate — the four remaining hubs (5c)', () => {
   const CASES = [
-    { portal: BUYERS_PORTAL, intent: 'buy', rail: 'active' },
-    { portal: INVESTORS_PORTAL, intent: 'invest', rail: 'sold' },
-    { portal: LANDLORDS_PORTAL, intent: 'lease-out', rail: 'none' },
-    { portal: TENANTS_PORTAL, intent: 'rent', rail: 'active' },
+    { portal: BUYERS_PORTAL, intent: 'buy' },
+    { portal: INVESTORS_PORTAL, intent: 'invest' },
+    { portal: LANDLORDS_PORTAL, intent: 'lease-out' },
+    { portal: TENANTS_PORTAL, intent: 'rent' },
   ] as const;
 
-  for (const { portal, intent, rail } of CASES) {
+  for (const { portal, intent } of CASES) {
     describe(portal.id, () => {
       const byLocale = (['en', 'es'] as const).map((locale) => ({
         locale,
@@ -185,17 +187,105 @@ describe('PortalTemplate — the four remaining hubs (5c)', () => {
         }
       });
 
-      it(`featured listings rail: ${rail === 'none' ? 'null (nothing matches)' : `${rail} fixtures render`}`, () => {
-        const markup = byLocale[0]!.markup;
-        if (rail === 'none') {
+      it('the proof rail renders null — fixtures never sit in a proof position (5d inversion)', () => {
+        // INVERTED by dispatch 5d (explicitly sanctioned): the 5c assertions
+        // rendered active/sold fixtures in the buyers/tenants/investors rails.
+        for (const { markup } of byLocale) {
           expect(markup).not.toContain(UI.sections.featuredListings.en);
-        } else {
-          expect(markup).toContain(UI.sections.featuredListings.en);
+          expect(markup).not.toContain('fixture-boulevard');
+          expect(markup).not.toContain('example-court');
+          expect(markup).not.toContain('fixture-condo');
+        }
+      });
+    });
+  }
+});
+
+/**
+ * Dispatch 5d — the three remaining subpages on the SAME SubpageTemplate, no
+ * fork. Title, question and answer are unfilled placeholder markers: visible
+ * placeholders for question and answer, crumb labels degraded to slugs,
+ * Article JSON-LD stripped to structural fields, empty slots null, the
+ * parent portal's LeadCta attribution — and zero raw TK_ served.
+ */
+describe('SubpageTemplate — the three remaining subpages (5d)', () => {
+  const CASES = [
+    {
+      subpage: FIRST_TIME_BUYER_PROGRAMS_SUBPAGE,
+      portal: BUYERS_PORTAL,
+      marker: 'SUBPAGE_FIRST_TIME_BUYER_PROGRAMS',
+    },
+    {
+      subpage: EXCHANGE_1031_SUBPAGE,
+      portal: INVESTORS_PORTAL,
+      marker: 'SUBPAGE_1031_EXCHANGE',
+    },
+    {
+      subpage: PROPERTY_MANAGEMENT_SUBPAGE,
+      portal: LANDLORDS_PORTAL,
+      marker: 'SUBPAGE_PROPERTY_MANAGEMENT',
+    },
+  ] as const;
+
+  for (const { subpage, portal, marker } of CASES) {
+    describe(subpage.id, () => {
+      const byLocale = (['en', 'es'] as const).map((locale) => ({
+        locale,
+        markup: renderToStaticMarkup(
+          <SubpageTemplate
+            subpage={subpage}
+            portal={portal}
+            tools={[]}
+            advice={[]}
+            faqs={[]}
+            locale={locale}
+            leadIntent={PORTAL_INTENT[portal.id]}
+          />
+        ),
+      }));
+
+      it('renders visible placeholders for question and answer — both locales', () => {
+        for (const { markup } of byLocale) {
+          expect(markup).toContain(`⟨ TK · ${marker}_QUESTION ⟩`);
+          expect(markup).toContain(`⟨ TK · ${marker}_ANSWER ⟩`);
+        }
+      });
+
+      it('serves zero raw TK_ strings — prose, crumbs, JSON-LD', () => {
+        for (const { markup } of byLocale) {
+          expect(markup).not.toMatch(/\bTK_/);
+        }
+      });
+
+      it('crumb labels degrade unfilled titles to the localized slugs', () => {
+        for (const { locale, markup } of byLocale) {
+          expect(markup).toContain(`href="/${locale}/${portal.slug[locale]}"`);
+          expect(markup).toContain(`>${portal.slug[locale]}</a>`);
           expect(markup).toContain(
-            rail === 'active'
-              ? 'href="/en/listings/100-fixture-boulevard-coral-gables"'
-              : 'href="/en/listings/300-example-court-palmetto-bay"'
+            `aria-current="page">${subpage.slug[locale]}<`
           );
+        }
+      });
+
+      it('empty slots render null; Article JSON-LD keeps author → #raul, no FAQPage', () => {
+        for (const { markup } of byLocale) {
+          expect(markup).not.toContain(UI.sections.relatedTools.en);
+          expect(markup).not.toContain(UI.sections.relatedTools.es);
+          expect(markup).not.toContain(UI.sections.adviceHeading.en);
+          expect(markup).not.toContain(UI.sections.faqHeading.en);
+          expect(markup).toContain('"@type":"Article"');
+          expect(markup).toContain('"author":{"@id"');
+          expect(markup).toContain(`"dateModified":"${subpage.answer.updated}"`);
+          expect(markup).not.toContain('"@type":"FAQPage"');
+          expect(markup).not.toContain('"@type":"RealEstateAgent"');
+        }
+      });
+
+      it('carries the parent portal LeadCta attribution', () => {
+        for (const { markup } of byLocale) {
+          expect(markup).toContain('data-source-type="portal_cta"');
+          expect(markup).toContain(`data-portal="${portal.id}"`);
+          expect(markup).toContain(`data-intent="${PORTAL_INTENT[portal.id]}"`);
         }
       });
     });

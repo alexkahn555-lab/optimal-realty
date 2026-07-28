@@ -32,7 +32,9 @@ export function GET(): Response {
     ...publishedPortals().map((p) =>
       line(portalLabel(p).en, `portal.${p.id}` as RouteId)
     ),
-    ...publishedSubpages().map((s) => line(s.title.en, `subpage.${s.id}` as RouteId)),
+    ...publishedSubpages().map((s) =>
+      line(portalLabel(s).en, `subpage.${s.id}` as RouteId)
+    ),
     line('Tools', 'tools'),
     ...publishedTools().map((tool) =>
       line(tool.title.en, `tool.${tool.id}` as RouteId)

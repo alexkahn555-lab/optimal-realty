@@ -14,11 +14,10 @@ import type { Localized } from '@/lib/types';
  * check-content.mjs, and any such marker here would move the baseline count.
  * Missing chrome copy is a bug to author, not a slot to defer.
  *
- * Portal / section nav labels for entity-backed routes (the five portals) come
- * from their content `title`, not from here — those entities do not exist in
- * Phase 1, so the header renders no section links yet. The `nav` labels below are
- * authored ahead for the fixed non-portal sections so later phases wire them in
- * without re-authoring.
+ * Portal labels for entity-backed routes come from their content `title` once
+ * the client fills it; until then the interim chrome labels live in `portals`
+ * below (moved from the home view in 5d). The `nav` labels are the fixed
+ * non-portal sections.
  *
  * ES review flags (see completion report): `home.metaDescription` uses
  * "tasación certificada" (certified appraisal) and "administración de asociaciones
@@ -46,6 +45,20 @@ export const UI = {
     contact: { en: 'Contact', es: 'Contacto' },
     menu: { en: 'Menu', es: 'Menú' },
     close: { en: 'Close', es: 'Cerrar' },
+  },
+
+  /* ---- Portal entry labels (chrome) --------------------------------------- */
+  // Moved verbatim from the home view (5d) so labels and slugs derive from
+  // the same PortalId registry and cannot drift again. These are interim
+  // chrome for portals whose content `title` is still an unfilled marker; the
+  // sellers entry keeps using its content title. D-07: 'Arrendadores' over
+  // the /es/propietarios slug is an OPEN Spanish review item — relocated
+  // here, not resolved.
+  portals: {
+    buyers: { en: 'Buyers', es: 'Compradores' },
+    investors: { en: 'Investors', es: 'Inversionistas' },
+    landlords: { en: 'Landlords', es: 'Arrendadores' },
+    tenants: { en: 'Tenants', es: 'Inquilinos' },
   },
 
   /* ---- Locale switch ------------------------------------------------------ */

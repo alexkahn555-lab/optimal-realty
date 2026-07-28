@@ -7,7 +7,7 @@ import { href } from '@/lib/seo/href';
 import { pageGraph, webPageNode } from '@/lib/seo/jsonld';
 import { SITE_NAME } from '@/lib/seo/meta';
 import { localizedClean } from '@/lib/content/loaders';
-import type { Locale, Localized, PortalId } from '@/lib/types';
+import type { Locale } from '@/lib/types';
 import { AnswerBlock, JsonLd, PlaceholderTK } from '@/components/seo';
 import { Hairline, Heading, Section } from '@/components/primitives';
 import { LeadCta } from '@/components/portal/LeadCta';
@@ -26,9 +26,11 @@ import { RelatedListings } from '@/components/portal/RelatedListings';
  * chrome and renders; the WebPage node's description drops via stripTK.
  *
  * Portal entries: Sellers is real (title + answer question from its content
- * file). The other four are REGISTERED routes with no content until Phase 5 —
- * they render label-only links (labels mirror PORTAL_SEG in lib/seo/href.ts)
- * with NO invented blurb: an unbuilt portal gets no description, period.
+ * file). The other four render label-only links — labels come from
+ * UI.portals in content/ui-strings.ts (5d migration) and hrefs from the
+ * route registry, both keyed by the SAME PortalId list so they cannot
+ * drift — with NO invented blurb: a portal whose prose is unfilled gets no
+ * description, period.
  */
 
 /** Answer freshness date — bump when the answer copy changes. */
@@ -41,18 +43,6 @@ const HOME_ANSWER = {
     es: 'TK_HOME_ANSWER',
   },
   updated: HOME_UPDATED,
-};
-
-/**
- * Labels for the four Phase 5 portals (chrome, mirrors PORTAL_SEG; the
- * sellers entry uses its content title instead). Local to the home view —
- * content/ui-strings.ts is outside this dispatch's allowlist.
- */
-const PENDING_PORTAL_LABEL: Record<Exclude<PortalId, 'sellers'>, Localized> = {
-  buyers: { en: 'Buyers', es: 'Compradores' },
-  investors: { en: 'Investors', es: 'Inversionistas' },
-  landlords: { en: 'Landlords', es: 'Arrendadores' },
-  tenants: { en: 'Tenants', es: 'Inquilinos' },
 };
 
 export function HomeView({ locale }: { locale: Locale }): JSX.Element {
@@ -92,19 +82,19 @@ export function HomeView({ locale }: { locale: Locale }): JSX.Element {
                 </span>
               </a>
             </li>
-            {(
-              Object.keys(PENDING_PORTAL_LABEL) as (keyof typeof PENDING_PORTAL_LABEL)[]
-            ).map((portalId) => (
-              <li key={portalId} className="border-b border-hair">
-                {/* Label-only: no blurb exists until the portal's content does. */}
-                <a
-                  className="block py-5 font-display text-2xl text-ink"
-                  href={href(`portal.${portalId}`, locale)}
-                >
-                  {t(PENDING_PORTAL_LABEL[portalId], locale)}
-                </a>
-              </li>
-            ))}
+            {(Object.keys(UI.portals) as (keyof typeof UI.portals)[]).map(
+              (portalId) => (
+                <li key={portalId} className="border-b border-hair">
+                  {/* Label-only: no blurb exists until the portal's content does. */}
+                  <a
+                    className="block py-5 font-display text-2xl text-ink"
+                    href={href(`portal.${portalId}`, locale)}
+                  >
+                    {t(UI.portals[portalId], locale)}
+                  </a>
+                </li>
+              )
+            )}
             <li className="border-b border-hair">
               <a className="block py-5" href={href('tools', locale)}>
                 <span className="font-display text-2xl text-ink underline">

@@ -52,7 +52,7 @@ export const LANDLORDS_PORTAL: Portal = {
     },
   ],
   toolIds: [], // landlord calculators do not exist yet — 5d+ wires the rack
-  subpageIds: [], // 5d adds them
+  subpageIds: ['landlords-property-management'],
   adviceIds: [], // client counsel never blocks a route — AdviceList renders null
   faqIds: [],
   featuredListings: { mode: 'leased', limit: 3 },

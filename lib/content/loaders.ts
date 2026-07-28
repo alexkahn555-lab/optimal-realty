@@ -16,10 +16,13 @@ import { INVESTORS_PORTAL } from '@/content/portals/investors';
 import { LANDLORDS_PORTAL } from '@/content/portals/landlords';
 import { SELLERS_FAQS, SELLERS_PORTAL } from '@/content/portals/sellers';
 import { TENANTS_PORTAL } from '@/content/portals/tenants';
+import { EXCHANGE_1031_SUBPAGE } from '@/content/subpages/1031-exchange';
+import { FIRST_TIME_BUYER_PROGRAMS_SUBPAGE } from '@/content/subpages/first-time-buyer-programs';
 import {
   HOME_VALUATION_FAQS,
   HOME_VALUATION_SUBPAGE,
 } from '@/content/subpages/home-valuation';
+import { PROPERTY_MANAGEMENT_SUBPAGE } from '@/content/subpages/property-management';
 import {
   SELLING_PROCESS_FAQS,
   SELLING_PROCESS_SUBPAGE,
@@ -64,6 +67,10 @@ const PORTALS: readonly Portal[] = [
 const SUBPAGES: readonly PortalSubpage[] = [
   HOME_VALUATION_SUBPAGE,
   SELLING_PROCESS_SUBPAGE,
+  // 5d — the three remaining portal subpages, in route-map order.
+  FIRST_TIME_BUYER_PROGRAMS_SUBPAGE,
+  EXCHANGE_1031_SUBPAGE,
+  PROPERTY_MANAGEMENT_SUBPAGE,
 ];
 const TOOLS: readonly ToolDef[] = [NET_PROCEEDS_TOOL];
 // Phase 4a/4b: three realistic-but-invented fixtures (two active, one sold —
@@ -120,11 +127,11 @@ function answerClean(answer: AnswerBlock): boolean {
 }
 
 /**
- * Portal titles are client-facing naming still under review (5c) and follow
- * the same mode split: report mode publishes an unfilled title (nav, crumbs
- * and llms.txt fall back to `portalLabel`; metaFor falls back to the site
- * name), strict mode unpublishes. Scoped to portals — subpage and tool titles
- * remain hard-gated until a dispatch says otherwise.
+ * Portal (5c) and subpage (5d) titles are client-facing naming still under
+ * review and follow the same mode split: report mode publishes an unfilled
+ * title (nav, crumbs and llms.txt fall back to `portalLabel`; metaFor falls
+ * back to the site name), strict mode unpublishes. Tool titles remain
+ * hard-gated until a dispatch says otherwise.
  */
 function titleClean(title: Localized): boolean {
   if (process.env.CONTENT_STRICT === '1') return localizedClean(title);
@@ -132,13 +139,13 @@ function titleClean(title: Localized): boolean {
 }
 
 /**
- * Display label for a portal wherever its title is rendered as chrome (site
- * nav, breadcrumbs, llms.txt): the title when filled, else the structural
- * localized slug — route-table data, never a raw marker and never
+ * Display label for a portal or subpage wherever its title is rendered as
+ * chrome (site nav, breadcrumbs, llms.txt): the title when filled, else the
+ * structural localized slug — route-table data, never a raw marker and never
  * agent-authored prose. Centralized so every render site degrades identically.
  */
-export function portalLabel(portal: Portal): Localized {
-  return localizedClean(portal.title) ? portal.title : portal.slug;
+export function portalLabel(entity: Pick<Portal, 'slug' | 'title'>): Localized {
+  return localizedClean(entity.title) ? entity.title : entity.slug;
 }
 
 /* ---- Published accessors ------------------------------------------------- */
@@ -158,7 +165,7 @@ export function publishedSubpages(): PortalSubpage[] {
     (s) =>
       s.status === 'published' &&
       localizedClean(s.slug) &&
-      localizedClean(s.title) &&
+      titleClean(s.title) &&
       answerClean(s.answer)
   );
 }

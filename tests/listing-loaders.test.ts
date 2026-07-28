@@ -1,7 +1,10 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { LISTING_L_2026_001 } from '@/content/listings/l-2026-001';
 import { LISTING_L_2026_002 } from '@/content/listings/l-2026-002';
 import { LISTING_L_2026_003 } from '@/content/listings/l-2026-003';
+import { RelatedListings } from '@/components/portal/RelatedListings';
 import {
   activeListings,
   isDiscoverable,
@@ -167,6 +170,17 @@ describe('fixture content-integrity invariants (Part 1.4 / R-12)', () => {
     }
     const { isFixture: _flag, ...real } = LISTING_L_2026_001;
     expect(isDiscoverable(real as Listing)).toBe(true);
+  });
+
+  it('a fixture never renders in a proof rail — every mode renders null (5d)', () => {
+    // The registry holds ONLY fixtures today, so the rail must be empty in
+    // all three modes on every surface that mounts it (hubs, subpages, home).
+    for (const mode of ['active', 'sold', 'leased'] as const) {
+      const markup = renderToStaticMarkup(
+        createElement(RelatedListings, { mode, limit: 3, locale: 'en' })
+      );
+      expect(markup, `mode=${mode} must render null`).toBe('');
+    }
   });
 
   it('the ONE sold fixture (4b) reads unmistakably as a fixture', () => {

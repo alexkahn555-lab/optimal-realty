@@ -174,9 +174,12 @@ test('home: five portal entries (only Sellers with a blurb), listings, lead form
   for (const label of ['Buyers', 'Investors', 'Landlords', 'Tenants']) {
     await expect(page.getByRole('link', { name: label, exact: true })).toBeVisible();
   }
-  await expect(
-    page.getByRole('link', { name: /100 Fixture Boulevard/ })
-  ).toBeVisible();
+  // INVERTED by dispatch 5d (explicitly sanctioned): the home featured rail
+  // previously surfaced the active fixtures; a demonstration listing never
+  // sits in a proof position. The fixtures stay on the listings index.
+  await expect(page.getByRole('link', { name: /100 Fixture Boulevard/ })).toHaveCount(
+    0
+  );
   await expect(page.locator('#lead-full-name')).toBeVisible();
 
   // The front door routes into the seller journey.

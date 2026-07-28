@@ -13,7 +13,10 @@ import { INVESTORS_PORTAL } from '@/content/portals/investors';
 import { LANDLORDS_PORTAL } from '@/content/portals/landlords';
 import { SELLERS_PORTAL } from '@/content/portals/sellers';
 import { TENANTS_PORTAL } from '@/content/portals/tenants';
+import { EXCHANGE_1031_SUBPAGE } from '@/content/subpages/1031-exchange';
+import { FIRST_TIME_BUYER_PROGRAMS_SUBPAGE } from '@/content/subpages/first-time-buyer-programs';
 import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
+import { PROPERTY_MANAGEMENT_SUBPAGE } from '@/content/subpages/property-management';
 import { SELLING_PROCESS_SUBPAGE } from '@/content/subpages/selling-process';
 import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
 import { AnswerBlock } from '@/components/seo';
@@ -39,6 +42,13 @@ const NEW_PORTALS = [
   INVESTORS_PORTAL,
   LANDLORDS_PORTAL,
   TENANTS_PORTAL,
+] as const;
+
+/** 5d — the three remaining subpages, paired with their parent portals. */
+const NEW_SUBPAGES = [
+  { subpage: FIRST_TIME_BUYER_PROGRAMS_SUBPAGE, portal: BUYERS_PORTAL },
+  { subpage: EXCHANGE_1031_SUBPAGE, portal: INVESTORS_PORTAL },
+  { subpage: PROPERTY_MANAGEMENT_SUBPAGE, portal: LANDLORDS_PORTAL },
 ] as const;
 
 describe('content ↔ href registry consistency', () => {
@@ -67,6 +77,18 @@ describe('content ↔ href registry consistency', () => {
     }
   });
 
+  it('the 5d subpage slugs match SUBPAGE_SEG under their parent portals', () => {
+    for (const { subpage, portal } of NEW_SUBPAGES) {
+      expect(subpage.portalId).toBe(portal.id);
+      expect(portal.subpageIds).toContain(subpage.id);
+      for (const locale of ['en', 'es'] as const) {
+        expect(href(`subpage.${subpage.id}`, locale)).toBe(
+          `/${locale}/${portal.slug[locale]}/${subpage.slug[locale]}`
+        );
+      }
+    }
+  });
+
   it('tool slug matches TOOL_SLUG (dispatch route table)', () => {
     expect(href('tool.net-proceeds', 'en')).toBe(
       `/en/tools/${NET_PROCEEDS_TOOL.slug.en}`
@@ -89,6 +111,9 @@ describe('content ↔ href registry consistency', () => {
     expect(publishedSubpages().map((s) => s.id)).toEqual([
       'sellers-home-valuation',
       'sellers-selling-process',
+      'buyers-first-time-buyer-programs',
+      'investors-1031-exchange',
+      'landlords-property-management',
     ]);
     expect(publishedTools().map((t) => t.id)).toEqual(['net-proceeds']);
   });
@@ -205,6 +230,72 @@ describe('mode-sensitive question/title publish gate (5c)', () => {
         expect(meta.title).toBeUndefined();
         expect(meta.description).toBe('Optimal Realty');
         expect((meta.openGraph as { title?: string }).title).toBe('Optimal Realty');
+        expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
+      }
+    }
+  });
+});
+
+/**
+ * Dispatch 5d — the 5c mode split, exercised on SUBPAGES: the three remaining
+ * subpages ship title, question and answer as TK_ placeholder markers and
+ * must STILL publish in report mode; strict mode unpublishes them while the
+ * clean sellers subpages stay (asserted in the 5b describe above).
+ */
+describe('mode-sensitive subpage publish gate (5d)', () => {
+  afterEach(() => {
+    delete process.env.CONTENT_STRICT;
+  });
+
+  it('the three new subpages carry TK title, question and answer — the live fixtures', () => {
+    for (const { subpage } of NEW_SUBPAGES) {
+      for (const locale of ['en', 'es'] as const) {
+        expect(subpage.title[locale]).toMatch(/^TK_/);
+        expect(subpage.answer.question[locale]).toMatch(/^TK_/);
+        expect(subpage.answer.answer[locale]).toMatch(/^TK_/);
+      }
+      expect(subpage.adviceIds).toEqual([]);
+      expect(subpage.relatedToolIds).toEqual([]);
+      expect(subpage.faqIds).toEqual([]);
+    }
+  });
+
+  it('report mode (default): all three TK subpages publish', () => {
+    const ids = publishedSubpages().map((s) => s.id);
+    for (const { subpage } of NEW_SUBPAGES) expect(ids).toContain(subpage.id);
+  });
+
+  it('strict mode: the TK subpages unpublish; sellers subpages stay', () => {
+    process.env.CONTENT_STRICT = '1';
+    expect(publishedSubpages().map((s) => s.id)).toEqual([
+      'sellers-home-valuation',
+      'sellers-selling-process',
+    ]);
+  });
+
+  it('portalLabel degrades an unfilled subpage title to the structural slug', () => {
+    for (const { subpage } of NEW_SUBPAGES) {
+      expect(portalLabel(subpage)).toEqual(subpage.slug);
+    }
+    // A filled subpage title is used verbatim.
+    expect(portalLabel(HOME_VALUATION_SUBPAGE)).toEqual(
+      HOME_VALUATION_SUBPAGE.title
+    );
+  });
+
+  it('metaFor for each new subpage falls to the site name — never a marker', () => {
+    for (const { subpage } of NEW_SUBPAGES) {
+      for (const locale of ['en', 'es'] as const) {
+        const meta = metaFor(
+          {
+            id: `subpage.${subpage.id}`,
+            title: subpage.title,
+            description: subpage.answer.answer,
+          },
+          locale
+        );
+        expect(meta.title).toBeUndefined();
+        expect(meta.description).toBe('Optimal Realty');
         expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
       }
     }

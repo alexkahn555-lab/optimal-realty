@@ -87,6 +87,22 @@ const SUBPAGE_SEG: Record<string, { portal: PortalId; slug: LocalizedSeg }> = {
     portal: 'sellers',
     slug: { en: 'selling-process', es: 'proceso-de-venta' },
   },
+  // 5d — Part 5 route map rows 10–12 (tenants has no subpage).
+  'buyers-first-time-buyer-programs': {
+    portal: 'buyers',
+    slug: {
+      en: 'first-time-buyer-programs',
+      es: 'programas-para-compradores-primerizos',
+    },
+  },
+  'investors-1031-exchange': {
+    portal: 'investors',
+    slug: { en: '1031-exchange', es: 'intercambio-1031' },
+  },
+  'landlords-property-management': {
+    portal: 'landlords',
+    slug: { en: 'property-management', es: 'administracion-de-propiedades' },
+  },
 };
 
 /** Join a base locale path with zero or more already-localized segments. */
