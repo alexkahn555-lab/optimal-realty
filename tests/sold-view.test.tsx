@@ -35,14 +35,25 @@ describe('sold detail structured data', () => {
     expect(markup).toContain('$742,500');
   });
 
-  it('reuses the core modules: identity, gallery, facts, scorecard', () => {
+  it('reuses the core modules: identity, gallery, facts — and NO scorecard', () => {
     expect(markup).toContain('300 Example Court');
     expect(markup).toContain('Property facts');
-    expect(markup).toContain("Broker&#x27;s scorecard");
+    // The fixture registers no scorecard (a fabricated professional
+    // assessment is unrepresentable, 4c) — M7 renders null by contract.
+    expect(markup).not.toContain("Broker&#x27;s scorecard");
     // Gallery section is present; its images sit behind the MediaImage
     // dynamic boundary (null under renderToStaticMarkup) — the served hero
     // is asserted in e2e.
     expect(markup).toContain('Media');
+  });
+
+  it('opens with the demonstration banner — a fixture never reads as a real transaction', () => {
+    expect(markup).toContain('data-testid="fixture-banner"');
+    expect(markup).toContain('Demonstration listing');
+    const es = renderToStaticMarkup(
+      <SoldDetailView listing={LISTING_L_2026_003} locale="es" />
+    );
+    expect(es).toContain('Propiedad de demostración');
   });
 
   it('has no lead form and no cost breakdown (record, not a pitch)', () => {
@@ -60,6 +71,17 @@ describe('the active↔sold flip swaps the structured data', () => {
     expect(markup).toContain('"@type":"RealEstateListing"');
     expect(markup).toContain('"@type":"Offer"');
     expect(markup).toContain('InStock');
+    // The report view carries the banner for fixtures too.
+    expect(markup).toContain('data-testid="fixture-banner"');
+  });
+
+  it('the banner is fixture-gated: a real listing renders none', () => {
+    const { isFixture: _flag, ...realShape } = LISTING_L_2026_003;
+    const markup = renderToStaticMarkup(
+      <SoldDetailView listing={realShape as Listing} locale="en" />
+    );
+    expect(markup).not.toContain('data-testid="fixture-banner"');
+    expect(markup).not.toContain('Demonstration listing');
   });
 
   it('an active listing flipped to sold emits WebPage and drops the Offer', () => {
@@ -100,5 +122,10 @@ describe('sold index', () => {
     expect(markup).toContain('"@type":"CollectionPage"');
     expect(markup).toContain('"@type":"ItemList"');
     expect(markup).toContain('/es/propiedades/300-example-court-palmetto-bay');
+  });
+
+  it('the intro is client-reviewed copy — visible placeholder, never raw TK_', () => {
+    expect(markup).toContain('SOLD_INDEX_INTRO'); // ⟨ TK · SOLD_INDEX_INTRO ⟩
+    expect(markup).not.toContain('TK_');
   });
 });

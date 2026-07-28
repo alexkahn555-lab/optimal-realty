@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { publishedListings } from '@/lib/content/loaders';
+import { isDiscoverable, publishedListings } from '@/lib/content/loaders';
 import { ogCard } from '@/components/listing/OgCard';
 
 /**
@@ -9,12 +9,18 @@ import { ogCard } from '@/components/listing/OgCard';
  * reference this one card via openGraph.images in the [sub] router metadata.
  * Per the reference, per-page OG exists ONLY on the share-heavy listing
  * template — other templates keep their static/site-level OG.
+ *
+ * FIXTURES GET NO CARD (4c): a share image is a discovery artifact, and a
+ * demonstration listing must never travel as a real property or transaction.
+ * Excluded from prerender AND guarded at request time.
  */
 
 export const dynamic = 'force-static';
 
 export function generateStaticParams(): { slug: string }[] {
-  return publishedListings().map((listing) => ({ slug: listing.slug }));
+  return publishedListings()
+    .filter(isDiscoverable)
+    .map((listing) => ({ slug: listing.slug }));
 }
 
 export async function GET(
@@ -23,7 +29,9 @@ export async function GET(
 ): Promise<Response> {
   const { slug } = await context.params;
   const listing = publishedListings().find((l) => l.slug === slug);
-  if (!listing) return new Response('Not found', { status: 404 });
+  if (!listing || !isDiscoverable(listing)) {
+    return new Response('Not found', { status: 404 });
+  }
 
   return new ImageResponse(ogCard(listing), { width: 1200, height: 630 });
 }

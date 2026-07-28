@@ -6,8 +6,9 @@ import { t } from '@/lib/i18n';
 import { href } from '@/lib/seo/href';
 import { pageGraph, webPageNode } from '@/lib/seo/jsonld';
 import { SITE_NAME } from '@/lib/seo/meta';
+import { localizedClean } from '@/lib/content/loaders';
 import type { Locale, Localized, PortalId } from '@/lib/types';
-import { AnswerBlock, JsonLd } from '@/components/seo';
+import { AnswerBlock, JsonLd, PlaceholderTK } from '@/components/seo';
 import { Hairline, Heading, Section } from '@/components/primitives';
 import { LeadCta } from '@/components/portal/LeadCta';
 import { RelatedListings } from '@/components/portal/RelatedListings';
@@ -19,9 +20,10 @@ import { RelatedListings } from '@/components/portal/RelatedListings';
  * /[locale] is its own segment entry, so nothing here can ride into other
  * routes.
  *
- * The answer block is assembled STRICTLY from confirmed facts (licenses,
- * founder, service area, own-listings policy, bilingual service) — authored
- * in-session and FLAGGED for client review, same path as the Phase 1–3 chrome.
+ * The answer PROSE is client-facing brokerage copy — never agent-authored
+ * (Part 1.4). It exists as a TK_ placeholder (visible in preview, absent in
+ * strict/production builds) until supplied. The H1 QUESTION is structural
+ * chrome and renders; the WebPage node's description drops via stripTK.
  *
  * Portal entries: Sellers is real (title + answer question from its content
  * file). The other four are REGISTERED routes with no content until Phase 5 —
@@ -34,23 +36,9 @@ const HOME_UPDATED = '2026-07-27' as const;
 
 const HOME_ANSWER = {
   question: { en: 'What is Optimal Realty?', es: '¿Qué es Optimal Realty?' },
-  // 54 words / confirmed facts only — FLAGGED for client review.
   answer: {
-    en:
-      'Optimal Realty is a Miami-Dade County real estate brokerage founded by ' +
-      'Raul Perez — a Florida licensed broker who is also a state-certified ' +
-      'appraiser and community association manager. It represents its own ' +
-      'listings only, publishes free bilingual decision calculators, and ' +
-      'serves sellers, buyers, investors, landlords, and tenants in English ' +
-      'and Spanish.',
-    es:
-      'Optimal Realty es una firma de corretaje inmobiliario del condado de ' +
-      'Miami-Dade fundada por Raul Perez — corredor licenciado en Florida que ' +
-      'también es tasador certificado por el estado y administrador de ' +
-      'asociaciones comunitarias. Representa únicamente sus propias ' +
-      'propiedades, publica calculadoras de decisión bilingües y gratuitas, y ' +
-      'atiende a vendedores, compradores, inversionistas, arrendadores e ' +
-      'inquilinos en inglés y español.',
+    en: 'TK_HOME_ANSWER',
+    es: 'TK_HOME_ANSWER',
   },
   updated: HOME_UPDATED,
 };
@@ -83,7 +71,11 @@ export function HomeView({ locale }: { locale: Locale }): JSX.Element {
         <div>
           <Heading level={1}>{t(HOME_ANSWER.question, locale)}</Heading>
           <div className="mt-6">
-            <AnswerBlock block={HOME_ANSWER} locale={locale} />
+            {localizedClean(HOME_ANSWER.answer) ? (
+              <AnswerBlock block={HOME_ANSWER} locale={locale} />
+            ) : (
+              <PlaceholderTK id="HOME_ANSWER" />
+            )}
           </div>
         </div>
 

@@ -181,6 +181,17 @@ export function isSoldArchived(listing: Listing): boolean {
   return listing.status === 'sold' || listing.status === 'leased';
 }
 
+/**
+ * Discovery predicate (dispatch 4c): fixtures stay ROUTABLE (their pages
+ * exist for template review, behind a visible demonstration banner) but are
+ * EXCLUDED from every discovery surface — sitemap, llms.txt, OG images. A
+ * demonstration listing that search engines or answer engines can find reads
+ * as a real property or transaction, which the content-integrity rules forbid.
+ */
+export function isDiscoverable(listing: Listing): boolean {
+  return listing.isFixture !== true;
+}
+
 /** Currently-marketed inventory: the active index, report routes, Offer nodes. */
 export function activeListings(): Listing[] {
   return publishedListings().filter(isMarketed);

@@ -260,6 +260,15 @@ export interface Listing {
     represented: 'seller' | 'buyer' | 'both';
   };
   virtualTourUrl?: string;
+  /**
+   * Marks a realistic-but-invented demonstration listing (Part 1.4). A
+   * fixture's routes stay reachable so templates can be reviewed, but it is
+   * EXCLUDED from every discovery surface (sitemap, llms.txt, OG images) and
+   * renders a visible demonstration banner on its pages. A listing carrying
+   * sold status or soldData WITHOUT this flag is a fabricated transaction —
+   * unrepresentable in review (invariant enforced by test).
+   */
+  isFixture?: true;
   // DELIBERATELY ABSENT: mlsNumber, IDX feed fields, syndication flags. See R-12.
 }
 

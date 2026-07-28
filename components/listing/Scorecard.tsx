@@ -2,6 +2,7 @@ import { localizedClean } from '@/lib/content/loaders';
 import { t } from '@/lib/i18n';
 import type { Listing, Locale } from '@/lib/types';
 import { Heading } from '@/components/primitives';
+import { PlaceholderTK } from '@/components/seo/PlaceholderTK';
 
 import { LISTING_UI } from './strings';
 
@@ -53,9 +54,16 @@ export function Scorecard({
           </div>
         ))}
       </dl>
-      <p className="mt-4 max-w-prose font-sans text-xs text-marine">
-        {t(LISTING_UI.scorecard.scaleNote, locale)}
-      </p>
+      {/* Attorney-reviewed disclaimer (4c): placeholder until supplied. */}
+      {localizedClean(LISTING_UI.scorecard.scaleNote) ? (
+        <p className="mt-4 max-w-prose font-sans text-xs text-marine">
+          {t(LISTING_UI.scorecard.scaleNote, locale)}
+        </p>
+      ) : (
+        <div className="mt-4">
+          <PlaceholderTK id="SCORECARD_SCALE_NOTE" />
+        </div>
+      )}
     </section>
   );
 }

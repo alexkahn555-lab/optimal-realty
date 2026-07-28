@@ -12,7 +12,9 @@ import { LEGAL_PAGES, LEGAL_SLUGS, type LegalPageDef } from '@/content/legal';
 import { isLocale } from '@/lib/i18n';
 import {
   activeListings,
+  isDiscoverable,
   isSoldArchived,
+  localizedClean,
   publishedPortals,
   publishedSubpages,
   publishedTools,
@@ -151,11 +153,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         robots: { index: false, follow: true },
       };
     case 'soldIndex':
+      // The intro is client-reviewed copy; while it is a TK_ placeholder the
+      // title doubles as description — a placeholder never ships as SERP copy.
       return metaFor(
         {
           id: 'listings.sold',
           title: LISTING_UI.sold.indexTitle,
-          description: LISTING_UI.sold.indexIntro,
+          description: localizedClean(LISTING_UI.sold.indexIntro)
+            ? LISTING_UI.sold.indexIntro
+            : LISTING_UI.sold.indexTitle,
         },
         locale
       );
@@ -173,6 +179,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         },
         locale
       );
+      // Fixtures get NO share card (4c): the OG route neither prerenders nor
+      // serves one, so the metadata must not reference it either.
+      if (!isDiscoverable(match.listing)) return meta;
       return {
         ...meta,
         openGraph: {

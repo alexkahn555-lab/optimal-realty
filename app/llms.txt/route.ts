@@ -2,6 +2,7 @@ import { ENTITY, LICENSE_LABEL, POSITIONING } from '@/config/entity';
 import { SITE_ORIGIN } from '@/config/origin';
 import {
   activeListings,
+  isDiscoverable,
   publishedPortals,
   publishedSubpages,
   publishedTools,
@@ -33,13 +34,18 @@ export function GET(): Response {
     ),
     line('Listings', 'listings'),
     // Labels run through the privacy degradation; sold pages are permanent.
-    ...activeListings().map((listing) =>
-      line(displayAddress(listing).heading, `listing.${listing.slug}` as RouteId)
-    ),
+    // Fixtures are excluded (4c): llms.txt is a discovery surface.
+    ...activeListings()
+      .filter(isDiscoverable)
+      .map((listing) =>
+        line(displayAddress(listing).heading, `listing.${listing.slug}` as RouteId)
+      ),
     line('Sold listings', 'listings.sold'),
-    ...soldListings().map((listing) =>
-      line(displayAddress(listing).heading, `listing.${listing.slug}` as RouteId)
-    ),
+    ...soldListings()
+      .filter(isDiscoverable)
+      .map((listing) =>
+        line(displayAddress(listing).heading, `listing.${listing.slug}` as RouteId)
+      ),
     line('About', 'about'),
     line('Contact', 'contact'),
   ];

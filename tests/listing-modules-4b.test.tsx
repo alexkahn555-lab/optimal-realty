@@ -60,22 +60,51 @@ describe('M5 — price history', () => {
 });
 
 describe('M7 — scorecard (fair-housing constraints)', () => {
-  it('renders null when the listing has no scorecard', () => {
-    expect(
-      renderToStaticMarkup(<Scorecard listing={LISTING_L_2026_001} locale="en" />)
-    ).toBe('');
+  /**
+   * Scorecard shape constructed INLINE: a scorecard is the broker's own
+   * professional assessment, so no fixture may REGISTER one as content
+   * (Part 1.4 / 4c) — the rendering contract is proven against test-local
+   * data, exactly as a real broker-authored scorecard will arrive.
+   */
+  const INLINE_SCORECARD: ScorecardEntry[] = [
+    { key: 'location', score: 4, note: { en: 'TK_TEST_NOTE', es: 'TK_TEST_NOTE' } },
+    { key: 'condition', score: 4, note: { en: 'TK_TEST_NOTE', es: 'TK_TEST_NOTE' } },
+    { key: 'layout', score: 5, note: { en: 'TK_TEST_NOTE', es: 'TK_TEST_NOTE' } },
+    { key: 'hoa', score: 3, note: { en: 'TK_TEST_NOTE', es: 'TK_TEST_NOTE' } },
+  ];
+
+  it('renders null when the listing has no scorecard — including every fixture', () => {
+    for (const fixture of [LISTING_L_2026_001, LISTING_L_2026_002, LISTING_L_2026_003]) {
+      expect(
+        renderToStaticMarkup(<Scorecard listing={fixture} locale="en" />)
+      ).toBe('');
+    }
   });
 
   it('bars are SINGLE color; scores render; TK notes do not', () => {
     const markup = renderToStaticMarkup(
-      <Scorecard listing={LISTING_L_2026_003} locale="en" />
+      <Scorecard
+        listing={variant(LISTING_L_2026_003, { scorecard: INLINE_SCORECARD })}
+        locale="en"
+      />
     );
     // One bar per entry, every fill the same class — color never encodes.
-    expect(markup.match(/bg-teal/g)).toHaveLength(
-      LISTING_L_2026_003.scorecard!.length
-    );
+    expect(markup.match(/bg-teal/g)).toHaveLength(INLINE_SCORECARD.length);
     expect(markup).toContain('4 / 5');
     expect(markup).toContain('5 / 5');
+    expect(markup).not.toContain('TK_');
+  });
+
+  it('the scale note is a DISCLAIMER — attorney copy, placeholder until supplied', () => {
+    const markup = renderToStaticMarkup(
+      <Scorecard
+        listing={variant(LISTING_L_2026_003, { scorecard: INLINE_SCORECARD })}
+        locale="en"
+      />
+    );
+    expect(LISTING_UI.scorecard.scaleNote.en).toMatch(/^TK_/);
+    expect(LISTING_UI.scorecard.scaleNote.es).toMatch(/^TK_/);
+    expect(markup).toContain('⟨ TK · SCORECARD_SCALE_NOTE ⟩');
     expect(markup).not.toContain('TK_');
   });
 

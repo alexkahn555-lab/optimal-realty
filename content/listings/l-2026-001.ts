@@ -21,6 +21,7 @@ import type { Listing } from '@/lib/types';
 export const LISTING_L_2026_001: Listing = {
   id: 'L-2026-001',
   slug: '100-fixture-boulevard-coral-gables',
+  isFixture: true,
   status: 'active',
   class: 'single-family',
   offerType: 'sale',

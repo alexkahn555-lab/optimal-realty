@@ -189,17 +189,23 @@ test('M6 deep link lands on the calculator with the listing prefilled', async ({
   await expect(page.getByTestId('calc-headline')).toBeVisible();
 });
 
-test('sitemap and llms.txt surface the listings (privacy-degraded labels)', async ({
+test('sitemap and llms.txt keep the indexes but list ZERO fixture listings (4c)', async ({
   request,
 }) => {
+  // Fixtures stay routable for template review but never enter a discovery
+  // surface — a demonstration listing that crawlers can find reads as a real
+  // property or transaction.
   const sitemap = await (await request.get('/sitemap.xml')).text();
   expect(sitemap).toContain('/en/listings</loc>');
-  expect(sitemap).toContain(`/en/listings/${REPORT.slug}`);
-  expect(sitemap).toContain(`/es/propiedades/${PRIVATE.slug}`);
+  expect(sitemap).not.toContain(REPORT.slug);
+  expect(sitemap).not.toContain(PRIVATE.slug);
+  expect(sitemap).not.toContain('300-example-court');
 
   const llms = await (await request.get('/llms.txt')).text();
   expect(llms).toContain('- Listings:');
-  expect(llms).toContain('- 100 Fixture Boulevard:');
-  expect(llms).toContain('- Miami, FL 33131:');
+  expect(llms).toContain('- Sold listings:');
+  expect(llms).not.toContain('- 100 Fixture Boulevard:');
+  expect(llms).not.toContain('- Miami, FL 33131:');
+  expect(llms).not.toContain('300 Example Court');
   expect(llms).not.toContain('200 Placeholder Way');
 });

@@ -4,6 +4,7 @@ import { LISTING_L_2026_002 } from '@/content/listings/l-2026-002';
 import { LISTING_L_2026_003 } from '@/content/listings/l-2026-003';
 import {
   activeListings,
+  isDiscoverable,
   isMarketed,
   isPublishedListing,
   isSoldArchived,
@@ -128,10 +129,51 @@ describe('fixture content-integrity invariants (Part 1.4 / R-12)', () => {
     }
   });
 
+  it('sold status or soldData WITHOUT isFixture is unrepresentable (restored 4a invariant)', () => {
+    // A closed transaction in this registry is either a REAL closing (which
+    // no agent may author) or a flagged demonstration fixture. Closed-
+    // transaction evidence on a listing that does not carry isFixture is a
+    // fabricated transaction — it must FAIL here, over the FULL set, whatever
+    // file it arrives in.
+    for (const listing of fixtures) {
+      const transactionEvidence =
+        isSoldArchived(listing) ||
+        listing.soldData !== undefined ||
+        listing.dates.sold !== undefined ||
+        (listing.priceHistory?.some((event) => event.kind === 'sold') ?? false);
+      if (transactionEvidence) {
+        expect(
+          listing.isFixture,
+          `${listing.id} carries closed-transaction data without isFixture`
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('every registered listing is a typed fixture — the flag is load-bearing', () => {
+    // Phase 4 registry truth: only demonstration fixtures exist. The flag
+    // drives discovery exclusion and the visible banner; a registered listing
+    // WITHOUT it claims to be a real property and must be surfaced here as a
+    // deliberate decision, never slipped in.
+    for (const fixture of fixtures) {
+      expect(fixture.isFixture, `${fixture.id} must carry isFixture`).toBe(true);
+    }
+    expect(publishedListings().every((l) => l.isFixture === true)).toBe(true);
+  });
+
+  it('fixtures are excluded from discovery; the predicate flips on real listings', () => {
+    for (const fixture of fixtures) {
+      expect(isDiscoverable(fixture)).toBe(false);
+    }
+    const { isFixture: _flag, ...real } = LISTING_L_2026_001;
+    expect(isDiscoverable(real as Listing)).toBe(true);
+  });
+
   it('the ONE sold fixture (4b) reads unmistakably as a fixture', () => {
     // A sold listing sits where proof of a real transaction would sit — the
-    // obviously-fake street name is the safeguard.
+    // typed flag plus the obviously-fake street name are the safeguards.
     expect(LISTING_L_2026_003.status).toBe('sold');
+    expect(LISTING_L_2026_003.isFixture).toBe(true);
     expect(LISTING_L_2026_003.address.line1).toContain('Example');
     expect(LISTING_L_2026_003.soldData).toBeDefined();
     expect(LISTING_L_2026_003.dates.sold).toBeDefined();
@@ -150,11 +192,13 @@ describe('fixture content-integrity invariants (Part 1.4 / R-12)', () => {
     }
   });
 
-  it('scorecard notes are TK_ (broker prose); scores are structural', () => {
-    for (const entry of LISTING_L_2026_003.scorecard ?? []) {
-      expect(entry.note.en).toMatch(/^TK_/);
-      expect(entry.score).toBeGreaterThanOrEqual(1);
-      expect(entry.score).toBeLessThanOrEqual(5);
+  it('no fixture registers a scorecard — professional judgment is never invented', () => {
+    // Scores ARE the broker's assessment (not neutral shape-data), so a
+    // fixture may not carry them as content (4c). M7's rendering contract is
+    // proven against an inline-constructed scorecard in
+    // tests/listing-modules-4b.test.tsx instead.
+    for (const fixture of fixtures) {
+      expect(fixture.scorecard, `${fixture.id} must not register a scorecard`).toBeUndefined();
     }
   });
 

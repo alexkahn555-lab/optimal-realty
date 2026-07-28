@@ -111,9 +111,12 @@ export const LISTING_UI = {
   /* ---- Scorecard (M7) — scores are the broker's own assessment ------------- */
   scorecard: {
     heading: { en: "Broker's scorecard", es: 'Evaluación del corredor' },
+    // The scale note is a DISCLAIMER (what the scores are and are not) —
+    // attorney-reviewed copy, never agent-written (4c). Renders as a visible
+    // placeholder in preview until supplied.
     scaleNote: {
-      en: 'Scored 1–5 by the listing broker — a professional assessment, not a third-party rating.',
-      es: 'Puntuación de 1 a 5 por el corredor — evaluación profesional, no una calificación de terceros.',
+      en: 'TK_SCORECARD_SCALE_NOTE',
+      es: 'TK_SCORECARD_SCALE_NOTE',
     },
     location: { en: 'Location', es: 'Ubicación' },
     condition: { en: 'Condition', es: 'Estado' },
@@ -156,6 +159,19 @@ export const LISTING_UI = {
     heading: { en: 'Similar listings', es: 'Propiedades similares' },
   },
 
+  /* ---- Fixture banner (4c) — truth labeling, structural chrome -------------- */
+  fixture: {
+    tag: { en: 'Demonstration listing', es: 'Propiedad de demostración' },
+    body: {
+      en:
+        'This page shows placeholder data to preview the site template. It is ' +
+        'not a real property, offer, or transaction.',
+      es:
+        'Esta página muestra datos de relleno para previsualizar la plantilla ' +
+        'del sitio. No es una propiedad, oferta ni transacción real.',
+    },
+  },
+
   /* ---- Lightbox (client island labels, resolved server-side) ---------------- */
   lightbox: {
     close: { en: 'Close', es: 'Cerrar' },
@@ -166,14 +182,11 @@ export const LISTING_UI = {
   /* ---- Sold view -------------------------------------------------------------- */
   sold: {
     indexTitle: { en: 'Sold listings', es: 'Propiedades vendidas' },
+    // Free prose about the brokerage's track record — client-reviewed copy,
+    // not agent-written (4c). Placeholder until supplied.
     indexIntro: {
-      en:
-        'Closed transactions represented by Optimal Realty in Miami-Dade ' +
-        'County. Each sold listing keeps its page as a permanent record.',
-      es:
-        'Transacciones cerradas representadas por Optimal Realty en el condado ' +
-        'de Miami-Dade. Cada propiedad vendida conserva su página como registro ' +
-        'permanente.',
+      en: 'TK_SOLD_INDEX_INTRO',
+      es: 'TK_SOLD_INDEX_INTRO',
     },
     bannerTag: { en: 'Sold', es: 'Vendida' },
     closedOn: { en: 'Transaction closed', es: 'Transacción cerrada el' },

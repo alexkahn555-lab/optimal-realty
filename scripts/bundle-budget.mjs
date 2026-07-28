@@ -94,6 +94,8 @@ export const CEILINGS = {
  */
 const CALCULATOR_SECTIONS = new Set(['tools', 'herramientas']);
 const LISTING_SECTIONS = new Set(['listings', 'propiedades']);
+/** Sold-archive index child segment, mirrored from lib/seo/href.ts SOLD_SEG. */
+const SOLD_INDEX_SUBS = new Set(['sold', 'vendidas']);
 
 /**
  * Concrete URL + its srcRoute pattern → budget class, or null for routes with
@@ -104,9 +106,17 @@ export function classify(url, srcRoute) {
   if (srcRoute === '/[locale]') return 'base';
   if (srcRoute === '/[locale]/[section]') return 'content';
   // /[locale]/[section]/[sub] and anything deeper: class follows the section slug.
-  const section = url.split('/')[2] ?? '';
+  const parts = url.split('/');
+  const section = parts[2] ?? '';
   if (CALCULATOR_SECTIONS.has(section)) return 'calculator';
-  if (LISTING_SECTIONS.has(section)) return 'listingReport';
+  if (LISTING_SECTIONS.has(section)) {
+    // The sold-archive INDEX (/en/listings/sold, /es/propiedades/vendidas) is
+    // a card grid like the listings index — none of the report template's
+    // modules or islands ride on it, so it carries the content ceiling. Only
+    // the exact index URL: anything deeper stays report-class.
+    if (parts.length === 4 && SOLD_INDEX_SUBS.has(parts[3])) return 'content';
+    return 'listingReport';
+  }
   return 'content';
 }
 

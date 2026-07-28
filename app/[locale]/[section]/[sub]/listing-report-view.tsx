@@ -8,6 +8,7 @@ import { LeadCta } from '@/components/portal/LeadCta';
 import { CostBreakdown } from '@/components/listing/CostBreakdown';
 import { DisclosureBlock } from '@/components/listing/DisclosureBlock';
 import { FactsTable } from '@/components/listing/FactsTable';
+import { FixtureBanner } from '@/components/listing/FixtureBanner';
 import { FeatureGroups } from '@/components/listing/FeatureGroups';
 import { IdentityHeader } from '@/components/listing/IdentityHeader';
 import { ListingAnswer } from '@/components/listing/ListingAnswer';
@@ -46,6 +47,7 @@ export function ListingReportView({
     <Section className="py-16 md:py-24">
       {/* ZONE 1 — identity: full-width answer-first header. */}
       <div className="space-y-10">
+        <FixtureBanner listing={listing} locale={locale} /> {/* fixture truth label */}
         <ListingBreadcrumbs listing={listing} locale={locale} /> {/* M1 */}
         <IdentityHeader listing={listing} locale={locale} /> {/* M2 */}
         <ListingAnswer listing={listing} locale={locale} /> {/* M3 */}

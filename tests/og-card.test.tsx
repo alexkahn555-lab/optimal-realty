@@ -3,15 +3,17 @@ import { describe, expect, it } from 'vitest';
 import { LISTING_L_2026_001 } from '@/content/listings/l-2026-001';
 import { LISTING_L_2026_002 } from '@/content/listings/l-2026-002';
 import { LISTING_L_2026_003 } from '@/content/listings/l-2026-003';
-import { publishedListings } from '@/lib/content/loaders';
+import { isDiscoverable, publishedListings } from '@/lib/content/loaders';
 import { ogCard } from '@/components/listing/OgCard';
-import { generateStaticParams } from '@/app/listings/[slug]/opengraph-image/route';
+import { GET, generateStaticParams } from '@/app/listings/[slug]/opengraph-image/route';
 
 /**
  * D3 — the OG card is a branded TYPOGRAPHIC card from structured data: no
  * imagery at all (a fabricated photo shared as "the property" is the exact
  * thing the content-integrity rules ban). Privacy and sold state carry
- * through; the route prerenders one card per published listing.
+ * through. The route prerenders one card per DISCOVERABLE listing — a share
+ * image is a discovery artifact, so a fixture never gets one (4c); the card
+ * component itself is proven against fixture data used as inline test input.
  */
 
 describe('listing OG card', () => {
@@ -41,11 +43,31 @@ describe('listing OG card', () => {
     expect(markup).not.toContain('$742,500'); // closed price is the page's story, not the share card's
   });
 
-  it('the OG route prerenders one card per published listing (active + sold)', () => {
-    expect(generateStaticParams().map((p) => p.slug).sort()).toEqual(
+  it('the OG route prerenders one card per DISCOVERABLE listing — zero fixtures', () => {
+    const slugs = generateStaticParams().map((p) => p.slug).sort();
+    expect(slugs).toEqual(
       publishedListings()
+        .filter(isDiscoverable)
         .map((l) => l.slug)
         .sort()
     );
+    // Every registered listing is a fixture today, so NO card prerenders.
+    for (const listing of [
+      LISTING_L_2026_001,
+      LISTING_L_2026_002,
+      LISTING_L_2026_003,
+    ]) {
+      expect(slugs).not.toContain(listing.slug);
+    }
+  });
+
+  it('the GET guard 404s a fixture slug even when requested directly', async () => {
+    const response = await GET(
+      new Request(
+        `http://localhost/listings/${LISTING_L_2026_003.slug}/opengraph-image`
+      ),
+      { params: Promise.resolve({ slug: LISTING_L_2026_003.slug }) }
+    );
+    expect(response.status).toBe(404);
   });
 });

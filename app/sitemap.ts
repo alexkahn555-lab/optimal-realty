@@ -3,6 +3,7 @@ import { SITE_ORIGIN } from '@/config/origin';
 import { href } from '@/lib/seo/href';
 import {
   activeListings,
+  isDiscoverable,
   publishedPortals,
   publishedSubpages,
   publishedTools,
@@ -25,11 +26,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...publishedPortals().map((p) => `portal.${p.id}` as RouteId),
     ...publishedSubpages().map((s) => `subpage.${s.id}` as RouteId),
     ...publishedTools().map((t) => `tool.${t.id}` as RouteId),
-    // Marketed inventory plus the sold archive (Phase 4b): sold pages keep
-    // their URLs permanently, so they stay in the sitemap.
+    // Marketed inventory plus the sold archive (sold pages keep their URLs
+    // permanently). FIXTURES ARE EXCLUDED (4c): demonstration listings stay
+    // routable but never enter a discovery surface.
     'listings.sold',
-    ...activeListings().map((l) => `listing.${l.slug}` as RouteId),
-    ...soldListings().map((l) => `listing.${l.slug}` as RouteId),
+    ...activeListings()
+      .filter(isDiscoverable)
+      .map((l) => `listing.${l.slug}` as RouteId),
+    ...soldListings()
+      .filter(isDiscoverable)
+      .map((l) => `listing.${l.slug}` as RouteId),
     ...publishedNeighborhoods().map(
       (n) => `neighborhood.${n.slug}` as RouteId,
     ),

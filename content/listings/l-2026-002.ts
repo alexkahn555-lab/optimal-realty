@@ -20,6 +20,7 @@ import type { Listing } from '@/lib/types';
 export const LISTING_L_2026_002: Listing = {
   id: 'L-2026-002',
   slug: 'fixture-condo-miami-33131',
+  isFixture: true,
   status: 'active',
   class: 'condo',
   offerType: 'sale',

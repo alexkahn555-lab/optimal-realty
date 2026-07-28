@@ -7,6 +7,7 @@ import { JsonLd } from '@/components/seo';
 import { Section } from '@/components/primitives';
 import { displayAddress } from '@/components/listing/helpers';
 import { FactsTable } from '@/components/listing/FactsTable';
+import { FixtureBanner } from '@/components/listing/FixtureBanner';
 import { IdentityHeader } from '@/components/listing/IdentityHeader';
 import { ListingAnswer } from '@/components/listing/ListingAnswer';
 import { ListingBreadcrumbs } from '@/components/listing/ListingBreadcrumbs';
@@ -37,6 +38,7 @@ export function SoldDetailView({
   return (
     <Section className="py-16 md:py-24">
       <div className="space-y-10">
+        <FixtureBanner listing={listing} locale={locale} /> {/* fixture truth label */}
         <ListingBreadcrumbs listing={listing} locale={locale} /> {/* M1 */}
         <SoldBanner listing={listing} locale={locale} />
         <IdentityHeader listing={listing} locale={locale} /> {/* M2 */}

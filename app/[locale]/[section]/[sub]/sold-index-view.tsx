@@ -2,10 +2,10 @@ import { SITE_ORIGIN } from '@/config/origin';
 import { UI } from '@/content/ui-strings';
 import { t } from '@/lib/i18n';
 import type { Locale } from '@/lib/types';
-import { soldListings } from '@/lib/content/loaders';
+import { localizedClean, soldListings } from '@/lib/content/loaders';
 import { href } from '@/lib/seo/href';
 import { collectionPageNode, itemListNode, pageGraph } from '@/lib/seo/jsonld';
-import { Breadcrumbs, JsonLd } from '@/components/seo';
+import { Breadcrumbs, JsonLd, PlaceholderTK } from '@/components/seo';
 import { Heading, Section } from '@/components/primitives';
 import { ListingCard } from '@/components/listing/ListingCard';
 import { displayAddress } from '@/components/listing/helpers';
@@ -36,9 +36,16 @@ export function SoldIndexView({ locale }: { locale: Locale }): JSX.Element {
         />
         <div>
           <Heading level={1}>{t(LISTING_UI.sold.indexTitle, locale)}</Heading>
-          <p className="mt-4 max-w-prose font-sans leading-relaxed text-ink">
-            {t(LISTING_UI.sold.indexIntro, locale)}
-          </p>
+          {/* Client-reviewed intro (4c): placeholder until supplied. */}
+          {localizedClean(LISTING_UI.sold.indexIntro) ? (
+            <p className="mt-4 max-w-prose font-sans leading-relaxed text-ink">
+              {t(LISTING_UI.sold.indexIntro, locale)}
+            </p>
+          ) : (
+            <div className="mt-4">
+              <PlaceholderTK id="SOLD_INDEX_INTRO" />
+            </div>
+          )}
         </div>
         <ul className="grid gap-10 md:grid-cols-2">
           {listings.map((listing, index) => (

@@ -80,18 +80,25 @@ describe('bundle-budget classify()', () => {
     expect(classify('/es/propiedades', '/[locale]/[section]')).toBe('content');
   });
 
-  it('weighs the sold archive routes in the listings section (Phase 4b)', () => {
+  it('the sold-archive INDEX is content; sold DETAILS stay listingReport (4c)', () => {
+    // The index is a card grid with no report modules or islands (measured
+    // 149.6 KB) — holding it to the 174 report ceiling hid ~24 KB of slack.
     expect(classify('/en/listings/sold', '/[locale]/[section]/[sub]')).toBe(
-      'listingReport'
+      'content'
     );
     expect(
       classify('/es/propiedades/vendidas', '/[locale]/[section]/[sub]')
-    ).toBe('listingReport');
+    ).toBe('content');
+    // A sold DETAIL page renders the full record template — report class.
     expect(
       classify(
         '/en/listings/300-example-court-palmetto-bay',
         '/[locale]/[section]/[sub]'
       )
+    ).toBe('listingReport');
+    // Only the exact index URL reclassifies — deeper paths stay report-class.
+    expect(
+      classify('/en/listings/sold/anything-deeper', '/[locale]/[section]/[sub]')
     ).toBe('listingReport');
   });
 

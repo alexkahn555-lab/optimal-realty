@@ -11,9 +11,10 @@ import type { Listing } from '@/lib/types';
  * closed price, dates) is invented shape-data for the sold template. Real
  * sold listings replace this file 1:1.
  *
- * Scorecard SCORES render (structural broker-assessment shape); the per-entry
- * NOTES are broker prose and stay placeholder markers. The key union has no
- * schools/desirability entry (fair-housing hard rule — unrepresentable).
+ * NO scorecard: scores are the broker's professional assessment, and a
+ * fabricated professional assessment cannot exist in this codebase even on a
+ * fixture (Part 1.4 / dispatch 4c). M7 renders null here by contract; its
+ * rendering is proven in tests against an inline-constructed scorecard.
  * The status flip active↔sold is a one-field edit: it moves this listing
  * between the active and sold indexes and adds/drops the Offer node
  * (verified in tests).
@@ -21,6 +22,7 @@ import type { Listing } from '@/lib/types';
 export const LISTING_L_2026_003: Listing = {
   id: 'L-2026-003',
   slug: '300-example-court-palmetto-bay',
+  isFixture: true,
   status: 'sold',
   class: 'townhouse',
   offerType: 'sale',
@@ -67,40 +69,6 @@ export const LISTING_L_2026_003: Listing = {
         es: 'Gráfico de relleno de color sólido etiquetado como espacio de galería 01 de una propiedad ficticia de prueba. No es una fotografía.',
       },
       role: 'gallery',
-    },
-  ],
-  scorecard: [
-    {
-      key: 'location',
-      score: 4,
-      note: {
-        en: 'TK_LISTING_L_2026_003_SCORE_LOCATION',
-        es: 'TK_LISTING_L_2026_003_SCORE_LOCATION',
-      },
-    },
-    {
-      key: 'condition',
-      score: 4,
-      note: {
-        en: 'TK_LISTING_L_2026_003_SCORE_CONDITION',
-        es: 'TK_LISTING_L_2026_003_SCORE_CONDITION',
-      },
-    },
-    {
-      key: 'layout',
-      score: 5,
-      note: {
-        en: 'TK_LISTING_L_2026_003_SCORE_LAYOUT',
-        es: 'TK_LISTING_L_2026_003_SCORE_LAYOUT',
-      },
-    },
-    {
-      key: 'hoa',
-      score: 3,
-      note: {
-        en: 'TK_LISTING_L_2026_003_SCORE_HOA',
-        es: 'TK_LISTING_L_2026_003_SCORE_HOA',
-      },
     },
   ],
   summary: {

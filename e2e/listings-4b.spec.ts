@@ -101,6 +101,8 @@ test('completed report renders the 4b modules (price history, features, narrativ
   page,
 }) => {
   await page.goto(REPORT_EN);
+  // The demonstration banner opens every fixture report (4c).
+  await expect(page.getByTestId('fixture-banner')).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Price history' })
   ).toBeVisible();
@@ -114,16 +116,20 @@ test('completed report renders the 4b modules (price history, features, narrativ
   await expect(page.getByText('⟨ TK · L-2026-001_NARRATIVE ⟩')).toBeVisible();
 });
 
-test('sold detail: banner + scorecard render; structured data has no Offer', async ({
+test('sold detail: demonstration + sold banners; NO scorecard; no Offer', async ({
   page,
 }) => {
   await page.goto(SOLD_EN);
+  // The fixture truth label opens the page (4c).
+  await expect(page.getByTestId('fixture-banner')).toBeVisible();
+  await expect(page.getByText('Demonstration listing')).toBeVisible();
   await expect(page.getByText('Transaction closed May 29, 2026.')).toBeVisible();
   await expect(
     page.getByText('Optimal Realty represented the seller.')
   ).toBeVisible();
-  await expect(page.getByText("Broker's scorecard")).toBeVisible();
-  await expect(page.locator('div.bg-teal')).toHaveCount(4); // 4 single-color bars
+  // No scorecard: a fixture registers no professional assessment (4c) — M7
+  // renders null; its rendering contract is proven in unit tests inline.
+  await expect(page.getByText("Broker's scorecard")).toHaveCount(0);
 
   const html = await page.content();
   expect(html).toContain('"@type":"WebPage"');
@@ -142,22 +148,20 @@ test('sold index links the sold fixture; active index does not list it', async (
   await expect(page.getByText('300 Example Court')).toHaveCount(0);
 });
 
-test('OG image endpoint serves the branded card; the page references it', async ({
+test('fixtures get NO share card: OG endpoint 404s, page references none (4c)', async ({
   page,
   request,
 }) => {
+  // A share image is a discovery artifact — a demonstration listing must
+  // never travel as a real property. The route guard 404s fixture slugs and
+  // the page metadata omits og:image entirely.
   const response = await request.get(
     `/listings/${LISTING_L_2026_001.slug}/opengraph-image`
   );
-  expect(response.status()).toBe(200);
-  expect(response.headers()['content-type']).toContain('image/png');
+  expect(response.status()).toBe(404);
 
   await page.goto(REPORT_EN);
-  const og = page.locator('meta[property="og:image"]');
-  await expect(og).toHaveAttribute(
-    'content',
-    new RegExp(`/listings/${LISTING_L_2026_001.slug}/opengraph-image`)
-  );
+  await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
 });
 
 test('home: five portal entries (only Sellers with a blurb), listings, lead form', async ({

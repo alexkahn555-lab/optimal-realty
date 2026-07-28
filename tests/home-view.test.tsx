@@ -7,17 +7,21 @@ import { HomeView } from '@/app/[locale]/home-view';
  * D4 — the home router: five portal entries (Sellers real, four label-only —
  * an unbuilt portal gets NO invented blurb), the tools entry, featured
  * listings from the active fixtures, the credential strip, one lead CTA, and
- * a WebPage node. Zero TK markers on the page.
+ * a WebPage node. Zero raw TK_ markers on the page; the answer PROSE is
+ * client copy and exists only as a visible placeholder until supplied (4c).
  */
 
 describe('HomeView', () => {
   const en = renderToStaticMarkup(<HomeView locale="en" />);
   const es = renderToStaticMarkup(<HomeView locale="es" />);
 
-  it('renders the answer block from confirmed facts as the LCP heading', () => {
+  it('renders the H1 question; the answer prose is a placeholder, never agent-written', () => {
     expect(en).toContain('What is Optimal Realty?');
     expect(es).toContain('¿Qué es Optimal Realty?');
-    expect(en).toContain('state-certified appraiser');
+    // Visible placeholder in preview — no agent-authored brokerage copy.
+    expect(en).toContain('HOME_ANSWER'); // ⟨ TK · HOME_ANSWER ⟩
+    expect(es).toContain('HOME_ANSWER');
+    expect(en).not.toContain('state-certified appraiser');
   });
 
   it('renders all five portal entries — only Sellers carries a blurb', () => {
