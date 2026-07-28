@@ -18,6 +18,7 @@ import { FIRST_TIME_BUYER_PROGRAMS_SUBPAGE } from '@/content/subpages/first-time
 import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
 import { PROPERTY_MANAGEMENT_SUBPAGE } from '@/content/subpages/property-management';
 import { SELLING_PROCESS_SUBPAGE } from '@/content/subpages/selling-process';
+import { CONDO_ASSESSMENT_TOOL } from '@/content/tools/condo-assessment-exposure';
 import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
 import { RENTAL_CASHFLOW_TOOL } from '@/content/tools/rental-cash-flow';
 import { VACANCY_COST_TOOL } from '@/content/tools/vacancy-cost';
@@ -121,7 +122,22 @@ describe('content ↔ href registry consistency', () => {
       'net-proceeds',
       'vacancy-cost',
       'rental-cashflow',
+      'condo-assessment',
     ]);
+  });
+
+  it('the condo-assessment tool slug matches TOOL_SLUG (5g route map)', () => {
+    expect(href('tool.condo-assessment', 'en')).toBe(
+      `/en/tools/${CONDO_ASSESSMENT_TOOL.slug.en}`
+    );
+    expect(href('tool.condo-assessment', 'es')).toBe(
+      `/es/herramientas/${CONDO_ASSESSMENT_TOOL.slug.es}`
+    );
+    expect(CONDO_ASSESSMENT_TOOL.slug.en).toBe('condo-assessment-exposure');
+    expect(CONDO_ASSESSMENT_TOOL.slug.es).toBe('exposicion-a-cuotas-especiales');
+    expect(CONDO_ASSESSMENT_TOOL.engineId).toBe('condo-assessment');
+    // Part 2.2: this tool serves BOTH buyers and investors.
+    expect(CONDO_ASSESSMENT_TOOL.portalIds).toEqual(['buyers', 'investors']);
   });
 
   it('the rental-cashflow tool slug matches TOOL_SLUG (5f route map)', () => {
@@ -367,7 +383,31 @@ describe('mode-sensitive tool publish gate (5e)', () => {
   it('portalLabel degrades the unfilled tool titles to the structural slugs', () => {
     expect(portalLabel(VACANCY_COST_TOOL)).toEqual(VACANCY_COST_TOOL.slug);
     expect(portalLabel(RENTAL_CASHFLOW_TOOL)).toEqual(RENTAL_CASHFLOW_TOOL.slug);
+    expect(portalLabel(CONDO_ASSESSMENT_TOOL)).toEqual(CONDO_ASSESSMENT_TOOL.slug);
     expect(portalLabel(NET_PROCEEDS_TOOL)).toEqual(NET_PROCEEDS_TOOL.title);
+  });
+
+  it('the condo tool carries TK prose everywhere; metaFor falls to the site name (5g)', () => {
+    for (const locale of ['en', 'es'] as const) {
+      expect(CONDO_ASSESSMENT_TOOL.title[locale]).toMatch(/^TK_/);
+      expect(CONDO_ASSESSMENT_TOOL.answer.question[locale]).toMatch(/^TK_/);
+      expect(CONDO_ASSESSMENT_TOOL.answer.answer[locale]).toMatch(/^TK_/);
+      expect(CONDO_ASSESSMENT_TOOL.methodNote[locale]).toMatch(/^TK_/);
+      expect(CONDO_ASSESSMENT_TOOL.disclaimer[locale]).toMatch(/^TK_/);
+      const meta = metaFor(
+        {
+          id: 'tool.condo-assessment',
+          title: CONDO_ASSESSMENT_TOOL.title,
+          description: CONDO_ASSESSMENT_TOOL.answer.answer,
+        },
+        locale
+      );
+      expect(meta.title).toBeUndefined();
+      expect(meta.description).toBe('Optimal Realty');
+      expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
+    }
+    expect(CONDO_ASSESSMENT_TOOL.faqIds).toEqual([]);
+    expect(CONDO_ASSESSMENT_TOOL.leadCapture.enabled).toBe(true);
   });
 
   it('the rental tool carries TK prose everywhere; metaFor falls to the site name (5f)', () => {

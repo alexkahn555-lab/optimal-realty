@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseCalcState, serializeCalcState } from '@/components/calc/query';
+import { CONDO_ASSESSMENT_ENGINE } from '@/lib/calc/condo-assessment';
 import { NET_PROCEEDS_ENGINE } from '@/lib/calc/net-proceeds';
 import { RENTAL_CASHFLOW_ENGINE } from '@/lib/calc/rental-cashflow';
 import { VACANCY_COST_ENGINE } from '@/lib/calc/vacancy-cost';
@@ -173,5 +174,33 @@ describe('calc query codec — rental-cashflow (5f)', () => {
     expect(parseCalcState(FIELDS_R, '?interestRatePct=25.5')).toEqual({}); // max 25
     expect(parseCalcState(FIELDS_R, '?loanTermYears=51')).toEqual({}); // max 50
     expect(parseCalcState(FIELDS_R, '?purchasePrice=999')).toEqual({}); // min 1,000
+  });
+});
+
+/** 5g — the codec on a FieldSpec with NO defaults: everything set serializes. */
+describe('calc query codec — condo-assessment (5g)', () => {
+  const FIELDS_C = CONDO_ASSESSMENT_ENGINE.fields;
+
+  it('roundtrips set values; nothing is a default, so nothing is omitted', () => {
+    const values: CalcFormValues = {
+      unitSharePct: 0.8654,
+      reserveBalance: 1_250_000,
+      deferredItemsTotal: 4_000_000,
+      monthlyDues: 850,
+    };
+    const query = serializeCalcState(FIELDS_C, values, {});
+    const params = new URLSearchParams(query);
+    expect(params.get('unitSharePct')).toBe('0.8654');
+    expect(params.get('reserveBalance')).toBe('1250000');
+    expect(parseCalcState(FIELDS_C, `?${query}`)).toEqual(values);
+  });
+
+  it('drops out-of-range condo params on parse (fractional share bounds hold)', () => {
+    expect(parseCalcState(FIELDS_C, '?unitSharePct=0')).toEqual({}); // min 0.0001
+    expect(parseCalcState(FIELDS_C, '?unitSharePct=101')).toEqual({}); // max 100
+    expect(parseCalcState(FIELDS_C, '?assessmentTermMonths=601')).toEqual({}); // max 600
+    expect(parseCalcState(FIELDS_C, '?unitSharePct=0.8654')).toEqual({
+      unitSharePct: 0.8654,
+    });
   });
 });

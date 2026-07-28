@@ -27,6 +27,7 @@ import {
   SELLING_PROCESS_FAQS,
   SELLING_PROCESS_SUBPAGE,
 } from '@/content/subpages/selling-process';
+import { CONDO_ASSESSMENT_TOOL } from '@/content/tools/condo-assessment-exposure';
 import { NET_PROCEEDS_FAQS, NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
 import { RENTAL_CASHFLOW_TOOL } from '@/content/tools/rental-cash-flow';
 import { VACANCY_COST_TOOL } from '@/content/tools/vacancy-cost';
@@ -78,6 +79,7 @@ const TOOLS: readonly ToolDef[] = [
   NET_PROCEEDS_TOOL,
   VACANCY_COST_TOOL,
   RENTAL_CASHFLOW_TOOL,
+  CONDO_ASSESSMENT_TOOL,
 ];
 // Phase 4a/4b: three realistic-but-invented fixtures (two active, one sold —
 // the test surface). Real listings later replace the fixture files 1:1.

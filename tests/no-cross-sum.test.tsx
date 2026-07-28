@@ -214,6 +214,48 @@ describe('both arrays populated: debt service and cash-to-close never meet (5f)'
     expect(markup).not.toContain('$1.13');
   });
 
+  it('a negative FUNDING GAP keeps its own label and reads plainly (5g)', () => {
+    // Condo exposure, reserves exceeding deferred items (golden case 2):
+    // the gap is a negative ONE-TIME line and the headline — never clamped,
+    // never relabeled as a closing shortfall.
+    const condo = renderToStaticMarkup(
+      <ResultPanel
+        result={{
+          monthlyLines: [
+            {
+              key: 'monthlyDues',
+              label: { en: 'Monthly dues', es: 'Cuota mensual' },
+              amountCents: 85_000,
+              basis: 'input',
+            },
+          ],
+          oneTimeLines: [
+            {
+              key: 'fundingGap',
+              label: {
+                en: 'Reserve funding gap (unit share)',
+                es: 'Brecha de financiamiento de reservas (parte de la unidad)',
+              },
+              amountCents: -625_000,
+              basis: 'input',
+            },
+          ],
+          headline: { key: 'fundingGap', amountCents: -625_000 },
+          assumptionKeysUsed: [],
+        }}
+        locale="en"
+        values={{}}
+        sourceSlug="condo-assessment"
+        leadIntent="buy"
+      />
+    );
+    expect(condo).toContain('Reserve funding gap (unit share)');
+    expect(condo).not.toContain('shortfall at closing');
+    expect(condo).toContain('-$6,250.00');
+    // dues 850 + |gap| never combine: 85_000 + 625_000 = 710_000 forbidden.
+    expect(condo).not.toContain('$7,100.00');
+  });
+
   it('a negative annual cash flow keeps its own label — no shortfall swap', () => {
     const negative = renderToStaticMarkup(
       <ResultPanel

@@ -215,6 +215,32 @@ export const UI = {
     maintenancePct: { en: 'Maintenance reserve', es: 'Reserva de mantenimiento' },
     managementPct: { en: 'Management fee', es: 'Cuota de administración' },
     closingCosts: { en: 'Closing costs', es: 'Costos de cierre' },
+    // Condo assessment exposure (5g) — every figure is disclosure data.
+    unitSharePct: {
+      en: 'Unit ownership share',
+      es: 'Porcentaje de propiedad de la unidad',
+    },
+    reserveBalance: {
+      en: 'Reserve balance (as disclosed)',
+      es: 'Saldo de reservas (según divulgación)',
+    },
+    deferredItemsTotal: {
+      en: 'Deferred maintenance total (as disclosed)',
+      es: 'Total de mantenimiento diferido (según divulgación)',
+    },
+    assessmentTotal: {
+      en: 'Special assessment total (levied or proposed)',
+      es: 'Total de la cuota especial (aprobada o propuesta)',
+    },
+    assessmentTermMonths: {
+      en: 'Assessment term (months)',
+      es: 'Plazo de la cuota especial (meses)',
+    },
+    assessmentInterestPct: {
+      en: 'Assessment interest rate (as disclosed)',
+      es: 'Tasa de interés de la cuota especial (según divulgación)',
+    },
+    monthlyDues: { en: 'Monthly dues', es: 'Cuota mensual' },
   },
 
   /* ---- Calculator enum value labels ---------------------------------------- */
@@ -260,6 +286,20 @@ export const UI = {
     annualInsurance: {
       en: 'No default — Florida premiums vary widely. Use your quote.',
       es: 'Sin valor predeterminado — las primas en Florida varían mucho. Use su cotización.',
+    },
+    // Condo assessment exposure (5g) — figures come from disclosures, never
+    // from this site.
+    unitSharePct: {
+      en: "From the declaration or the association's disclosure documents.",
+      es: 'De la declaración o los documentos de divulgación de la asociación.',
+    },
+    disclosedFigure: {
+      en: "From the association's disclosure documents.",
+      es: 'De los documentos de divulgación de la asociación.',
+    },
+    assessmentTotal: {
+      en: 'Only if the association has levied or proposed one.',
+      es: 'Solo si la asociación la ha aprobado o propuesto.',
     },
   },
 
@@ -340,6 +380,28 @@ export const UI = {
     annualCashFlow: {
       en: 'Estimated annual cash flow',
       es: 'Flujo de caja anual estimado',
+    },
+    // Condo assessment exposure (5g)
+    monthlyDues: { en: 'Monthly dues', es: 'Cuota mensual' },
+    assessmentInstallment: {
+      en: 'Assessment installment',
+      es: 'Pago mensual de la cuota especial',
+    },
+    shareOfDeferredItems: {
+      en: 'Unit share of deferred items',
+      es: 'Parte de la unidad en el mantenimiento diferido',
+    },
+    shareOfReserveBalance: {
+      en: 'Unit share of the reserve balance',
+      es: 'Parte de la unidad en el saldo de reservas',
+    },
+    fundingGap: {
+      en: 'Reserve funding gap (unit share)',
+      es: 'Brecha de financiamiento de reservas (parte de la unidad)',
+    },
+    assessmentTotal: {
+      en: 'Unit assessment total (with disclosed interest)',
+      es: 'Total de la cuota especial de la unidad (con interés divulgado)',
     },
   },
 

@@ -379,3 +379,192 @@ test('cross-locale rental segments 404', async ({ page }) => {
     expect(response?.status(), path).toBe(404);
   }
 });
+
+/* ==========================================================================
+ * Dispatch 5g — the condo assessment exposure calculator: disclosure
+ * arithmetic only. No assumptions table renders (there are none), nothing is
+ * prefilled, the headline switches from funding gap to assessment total when
+ * an assessment is levied, and a negative gap reads plainly.
+ * ========================================================================== */
+
+const CONDO_EN = '/en/tools/condo-assessment-exposure';
+const CONDO_ES = '/es/herramientas/exposicion-a-cuotas-especiales';
+
+async function fillCondoBaseline(page: import('@playwright/test').Page) {
+  await page.locator('#calc-unitSharePct').fill('1');
+  await page.locator('#calc-reserveBalance').fill('500000');
+  await page.locator('#calc-deferredItemsTotal').fill('900000');
+  await page.locator('#calc-monthlyDues').fill('850');
+}
+
+for (const { locale, path } of [
+  { locale: 'en' as const, path: CONDO_EN },
+  { locale: 'es' as const, path: CONDO_ES },
+]) {
+  test(`condo ${locale}: visible placeholders (H1, answer, method, disclaimer), zero raw TK_`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    await expect(
+      page.getByRole('heading', {
+        level: 1,
+        name: '⟨ TK · TOOL_CONDO_ASSESSMENT_QUESTION ⟩',
+      })
+    ).toBeVisible();
+    await expect(
+      page.getByText('⟨ TK · TOOL_CONDO_ASSESSMENT_ANSWER ⟩')
+    ).toBeVisible();
+    await expect(
+      page.getByText('⟨ TK · TOOL_CONDO_ASSESSMENT_METHOD ⟩')
+    ).toBeVisible();
+    await expect(
+      page.getByText('⟨ TK · TOOL_CONDO_ASSESSMENT_DISCLAIMER ⟩')
+    ).toBeVisible();
+    expect(await page.title()).toBe(SITE_NAME);
+    const html = await page.content();
+    expect(/\bTK_/.test(html), `${path} served a raw TK_ marker`).toBe(false);
+  });
+}
+
+test('condo: NO assumptions section renders and no field is prefilled', async ({
+  page,
+}) => {
+  await page.goto(CONDO_EN);
+  await expect(page.getByText(UI.calc.assumptionsHeading.en)).toHaveCount(0);
+  // Every input starts EMPTY — no association figure is ever prefilled.
+  for (const key of [
+    'unitSharePct',
+    'reserveBalance',
+    'deferredItemsTotal',
+    'assessmentTotal',
+    'assessmentTermMonths',
+    'assessmentInterestPct',
+    'monthlyDues',
+  ]) {
+    await expect(page.locator(`#calc-${key}`)).toHaveValue('');
+  }
+});
+
+test('condo golden parity in the DOM: gap headline, then assessment headline', async ({
+  page,
+}) => {
+  await page.goto(CONDO_EN);
+  await fillCondoBaseline(page);
+
+  // No assessment → headline is the unit's funding gap: 1% of 900k − 500k.
+  const headline = page.getByTestId('calc-headline');
+  await expect(headline).toBeVisible();
+  await expect(headline).toHaveText('$4,000.00');
+  await expect(page.getByText(UI.ledger.fundingGap.en).first()).toBeVisible();
+  await expect(page.getByText(UI.calc.estimateTag.en).first()).toBeVisible();
+
+  // Levy an assessment → the headline switches to the unit assessment total
+  // (golden case 4: $12,000 share over 24 months at 6% → $12,764.34).
+  await page.locator('#calc-assessmentTotal').fill('1200000');
+  await page.locator('#calc-assessmentTermMonths').fill('24');
+  await page.locator('#calc-assessmentInterestPct').fill('6');
+  await expect(headline).toHaveText('$12,764.34');
+  await expect(page.getByText(UI.ledger.assessmentTotal.en).first()).toBeVisible();
+  await expect(page.getByText('$531.85')).toBeVisible(); // installment (monthly)
+  await expect(page.getByText(UI.calc.monthlyHeading.en, { exact: true })).toBeVisible();
+  await expect(page.getByText(UI.calc.oneTimeHeading.en, { exact: true })).toBeVisible();
+});
+
+test('condo: reserves exceeding deferred items read as a plain negative gap', async ({
+  page,
+}) => {
+  await page.goto(CONDO_EN);
+  await page.locator('#calc-unitSharePct').fill('1.25');
+  await page.locator('#calc-reserveBalance').fill('2000000');
+  await page.locator('#calc-deferredItemsTotal').fill('1500000');
+  await page.locator('#calc-monthlyDues').fill('850');
+  await expect(page.getByTestId('calc-headline')).toHaveText('-$6,250.00');
+  await expect(page.getByText(UI.ledger.fundingGap.en).first()).toBeVisible();
+});
+
+test('condo result state serializes; canonical stays bare', async ({ page }) => {
+  await page.goto(CONDO_EN);
+  await fillCondoBaseline(page);
+  await expect(page).toHaveURL(/unitSharePct=1/);
+  await expect(page).toHaveURL(/reserveBalance=500000/);
+  const canonical = page.locator('link[rel="canonical"]');
+  await expect(canonical).toHaveAttribute(
+    'href',
+    /\/en\/tools\/condo-assessment-exposure$/
+  );
+});
+
+test('condo "email me this breakdown" posts buy attribution', async ({ page }) => {
+  let submission: Record<string, unknown> | null = null;
+  await page.route('**/api/leads', async (route) => {
+    submission = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({ id: 'e2e-mock-id' }),
+    });
+  });
+
+  await page.goto(CONDO_EN);
+  await fillCondoBaseline(page);
+  await expect(page.getByTestId('calc-headline')).toBeVisible();
+
+  await page.getByText(UI.calc.emailBreakdown.en).click();
+  await page.locator('#lead-full-name').fill('Test Buyer');
+  await page.locator('#lead-email').fill('buyer@example.com');
+  await page.getByRole('button', { name: UI.form.submit.en }).click();
+  await expect(page.getByText(UI.form.successHeading.en)).toBeVisible();
+
+  expect(submission).not.toBeNull();
+  const body = submission as unknown as Record<string, unknown>;
+  expect(body.sourceType).toBe('tool');
+  expect(body.sourceSlug).toBe('condo-assessment');
+  expect(body.intent).toBe('buy');
+  expect(String(body.route)).toBe(CONDO_EN);
+
+  const payload = body.payload as {
+    outputs: { headline: { key: string; amountCents: number } };
+  };
+  expect(payload.outputs.headline.key).toBe('fundingGap');
+  expect(payload.outputs.headline.amountCents).toBe(400_000);
+});
+
+test('condo listed on the tools hub and BOTH racks, both locales', async ({
+  page,
+}) => {
+  await page.goto('/en/tools');
+  await expect(page.locator(`a[href="${CONDO_EN}"]`)).toBeVisible();
+  await page.goto('/es/herramientas');
+  await expect(page.locator(`a[href="${CONDO_ES}"]`)).toBeVisible();
+  for (const hub of ['/en/buyers', '/en/investors']) {
+    await page.goto(hub);
+    await expect(page.locator(`a[href="${CONDO_EN}"]`)).toBeVisible();
+    expect(/\bTK_/.test(await page.content()), hub).toBe(false);
+  }
+  for (const hub of ['/es/compradores', '/es/inversionistas']) {
+    await page.goto(hub);
+    await expect(page.locator(`a[href="${CONDO_ES}"]`)).toBeVisible();
+    expect(/\bTK_/.test(await page.content()), hub).toBe(false);
+  }
+});
+
+test('condo URLs sit on both discovery surfaces — marker-free', async ({
+  page,
+}) => {
+  const sitemap = await (await page.request.get('/sitemap.xml')).text();
+  const llms = await (await page.request.get('/llms.txt')).text();
+  for (const url of [CONDO_EN, CONDO_ES]) {
+    expect(sitemap, `sitemap.xml must carry ${url}`).toContain(url);
+    expect(llms, `llms.txt must carry ${url}`).toContain(url);
+  }
+});
+
+test('cross-locale condo segments 404', async ({ page }) => {
+  for (const path of [
+    '/en/tools/exposicion-a-cuotas-especiales',
+    '/es/herramientas/condo-assessment-exposure',
+  ]) {
+    const response = await page.goto(path);
+    expect(response?.status(), path).toBe(404);
+  }
+});

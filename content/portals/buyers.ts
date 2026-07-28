@@ -53,7 +53,7 @@ export const BUYERS_PORTAL: Portal = {
       detail: { en: 'TK_PORTAL_BUYERS_STEP_5_DETAIL', es: 'TK_PORTAL_BUYERS_STEP_5_DETAIL' },
     },
   ],
-  toolIds: [], // buyers calculators do not exist yet — 5d+ wires the rack
+  toolIds: ['condo-assessment'], // 5g — the first buyer calculator
   subpageIds: ['buyers-first-time-buyer-programs'],
   adviceIds: [], // client counsel never blocks a route — AdviceList renders null
   faqIds: [],

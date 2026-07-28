@@ -78,6 +78,16 @@ describe('href()', () => {
     );
   });
 
+  it('the condo-assessment-exposure tool round-trips both locales (5g route map)', () => {
+    // Slugs per route map row 18 (supersede the Phase 1 judgment slugs).
+    expect(href('tool.condo-assessment', 'en')).toBe(
+      '/en/tools/condo-assessment-exposure'
+    );
+    expect(href('tool.condo-assessment', 'es')).toBe(
+      '/es/herramientas/exposicion-a-cuotas-especiales'
+    );
+  });
+
   it('portal subpage routes (Phase 3)', () => {
     expect(href('subpage.sellers-home-valuation', 'en')).toBe(
       '/en/sellers/home-valuation'

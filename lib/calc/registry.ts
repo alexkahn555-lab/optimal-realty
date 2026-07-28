@@ -1,6 +1,10 @@
 import type { CalcId, EngineResult } from '@/lib/types';
 import type { CalcEngine } from '@/lib/calc/types';
 import {
+  CONDO_ASSESSMENT_ENGINE,
+  fromFormValues as condoFromFormValues,
+} from '@/lib/calc/condo-assessment';
+import {
   NET_PROCEEDS_ENGINE,
   clampInputs,
   fromFormValues,
@@ -18,7 +22,8 @@ import {
  * Engine registry — the island resolves engineId → engine here, so the client
  * bundle contains exactly the engines that pages actually mount. One entry
  * per shipped engine: net-proceeds (Phase 3), vacancy-cost (5e),
- * rental-cashflow (5f); the remaining three are separate dispatches.
+ * rental-cashflow (5f), condo-assessment (5g); the remaining two are
+ * separate dispatches.
  */
 
 export type CalcFormValues = Record<string, number | string | boolean>;
@@ -48,5 +53,10 @@ export const CALCS: Partial<Record<CalcId, RegisteredCalc>> = {
   'rental-cashflow': {
     engine: RENTAL_CASHFLOW_ENGINE as unknown as CalcEngine<unknown, EngineResult>,
     toInput: rentalFromFormValues,
+  },
+  // 5g — disclosure arithmetic only: no assumptions, no cross-field bounds.
+  'condo-assessment': {
+    engine: CONDO_ASSESSMENT_ENGINE as unknown as CalcEngine<unknown, EngineResult>,
+    toInput: condoFromFormValues,
   },
 };

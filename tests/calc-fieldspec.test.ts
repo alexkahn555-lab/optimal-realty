@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ASSUMPTIONS } from '@/config/assumptions';
+import {
+  CONDO_ASSESSMENT_ENGINE,
+  fromFormValues as condoFromFormValues,
+} from '@/lib/calc/condo-assessment';
 import { NET_PROCEEDS_ENGINE, fromFormValues } from '@/lib/calc/net-proceeds';
 import {
   RENTAL_CASHFLOW_ENGINE,
@@ -120,6 +124,23 @@ describe('FieldSpec parity — every registered engine (5e)', () => {
     );
     for (const key of result.assumptionKeysUsed) {
       expect(ASSUMPTIONS[key], `assumption "${key}"`).toBeDefined();
+    }
+  });
+
+  it('condo-assessment consults ZERO assumptions and prefills nothing (5g)', () => {
+    const result = CONDO_ASSESSMENT_ENGINE.compute(
+      condoFromFormValues({
+        unitSharePct: 1,
+        reserveBalance: 500_000,
+        deferredItemsTotal: 900_000,
+        monthlyDues: 850,
+      }),
+      ASSUMPTIONS
+    );
+    expect(result.assumptionKeysUsed).toEqual([]);
+    for (const field of CONDO_ASSESSMENT_ENGINE.fields) {
+      expect(field.default, field.key).toBeUndefined();
+      expect(field.defaultFromAssumption, field.key).toBeUndefined();
     }
   });
 
