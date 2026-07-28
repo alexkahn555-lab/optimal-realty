@@ -28,6 +28,7 @@ import {
   SELLING_PROCESS_SUBPAGE,
 } from '@/content/subpages/selling-process';
 import { NET_PROCEEDS_FAQS, NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
+import { VACANCY_COST_TOOL } from '@/content/tools/vacancy-cost';
 
 /**
  * ============================================================================
@@ -72,7 +73,7 @@ const SUBPAGES: readonly PortalSubpage[] = [
   EXCHANGE_1031_SUBPAGE,
   PROPERTY_MANAGEMENT_SUBPAGE,
 ];
-const TOOLS: readonly ToolDef[] = [NET_PROCEEDS_TOOL];
+const TOOLS: readonly ToolDef[] = [NET_PROCEEDS_TOOL, VACANCY_COST_TOOL];
 // Phase 4a/4b: three realistic-but-invented fixtures (two active, one sold —
 // the test surface). Real listings later replace the fixture files 1:1.
 const LISTINGS: readonly Listing[] = [
@@ -127,11 +128,10 @@ function answerClean(answer: AnswerBlock): boolean {
 }
 
 /**
- * Portal (5c) and subpage (5d) titles are client-facing naming still under
- * review and follow the same mode split: report mode publishes an unfilled
- * title (nav, crumbs and llms.txt fall back to `portalLabel`; metaFor falls
- * back to the site name), strict mode unpublishes. Tool titles remain
- * hard-gated until a dispatch says otherwise.
+ * Portal (5c), subpage (5d) and tool (5e) titles are client-facing naming
+ * still under review and follow the same mode split: report mode publishes an
+ * unfilled title (nav, crumbs, racks and llms.txt fall back to `portalLabel`;
+ * metaFor falls back to the site name), strict mode unpublishes.
  */
 function titleClean(title: Localized): boolean {
   if (process.env.CONTENT_STRICT === '1') return localizedClean(title);
@@ -175,7 +175,7 @@ export function publishedTools(): ToolDef[] {
     (tool) =>
       tool.status === 'published' &&
       localizedClean(tool.slug) &&
-      localizedClean(tool.title) &&
+      titleClean(tool.title) &&
       answerClean(tool.answer)
   );
 }

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ASSUMPTIONS } from '@/config/assumptions';
 import { NET_PROCEEDS_ENGINE, fromFormValues } from '@/lib/calc/net-proceeds';
+import {
+  VACANCY_COST_ENGINE,
+  fromFormValues as vacancyFromFormValues,
+} from '@/lib/calc/vacancy-cost';
 import { CALCS } from '@/lib/calc/registry';
 import { ENUM_LABEL, uiString } from '@/components/calc/labels';
 
@@ -76,5 +80,42 @@ describe('FieldSpec parity', () => {
     expect(clamped.mortgagePayoff).toBe(150_000);
     expect(clamped.secondLienPayoff).toBe(100_000);
     expect(clamped.sellerConcessions).toBe(10_000);
+  });
+});
+
+/**
+ * 5e — the parity contract now runs for EVERY registered engine, so a third
+ * engine cannot ship with an unresolvable chrome key or assumption reference.
+ */
+describe('FieldSpec parity — every registered engine (5e)', () => {
+  for (const [id, calc] of Object.entries(CALCS)) {
+    it(`${id}: labelKeys, helperKeys, enum labels and assumption keys all resolve`, () => {
+      for (const field of calc.engine.fields) {
+        expect(() => uiString(field.labelKey)).not.toThrow();
+        const helperKey = field.helperKey;
+        if (helperKey) expect(() => uiString(helperKey)).not.toThrow();
+        if (field.kind === 'enum') {
+          for (const value of field.enumValues ?? []) {
+            expect(ENUM_LABEL[value], `enum label for "${value}"`).toBeDefined();
+          }
+        }
+        if (field.defaultFromAssumption !== undefined) {
+          expect(
+            ASSUMPTIONS[field.defaultFromAssumption],
+            `assumption "${field.defaultFromAssumption}" (field "${field.key}")`
+          ).toBeDefined();
+        }
+      }
+    });
+  }
+
+  it('vacancy-cost assumptionKeysUsed keys exist in the set', () => {
+    const result = VACANCY_COST_ENGINE.compute(
+      vacancyFromFormValues({ monthlyRent: 2_000 }),
+      ASSUMPTIONS
+    );
+    for (const key of result.assumptionKeysUsed) {
+      expect(ASSUMPTIONS[key], `assumption "${key}"`).toBeDefined();
+    }
   });
 });

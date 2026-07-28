@@ -47,7 +47,8 @@ describe('no summing across monthlyLines and oneTimeLines', () => {
     expect(markup).toContain('$111.11');
     expect(markup).toContain('$222.22');
     expect(markup).toContain('$555.55');
-    expect(markup).toContain('One-time costs at closing');
+    // Heading generalized in 5e ('at closing' dropped — serves all engines).
+    expect(markup).toContain('One-time costs');
     expect(markup).toContain('Monthly');
   });
 
@@ -56,5 +57,65 @@ describe('no summing across monthlyLines and oneTimeLines', () => {
     expect(markup).not.toContain('$333.33');
     // Nor a cross-sum folded into the headline: 55_555 + 11_111 etc.
     expect(markup).not.toContain('$666.66');
+  });
+});
+
+/**
+ * 5e extension of the same rule to DAY-VALUED secondary lines: a day count is
+ * not money — it renders in its own block, formatted as days, and never sums
+ * with (or formats as) a currency amount.
+ */
+describe('day-valued secondary lines never read as money', () => {
+  const WITH_SECONDARY: EngineResult & {
+    secondaryLines?: import('@/lib/types').LedgerLine[];
+  } = {
+    monthlyLines: [],
+    oneTimeLines: [
+      {
+        key: 'vacancyLoss',
+        label: { en: 'Rent lost to vacancy', es: 'Renta perdida por vacancia' },
+        amountCents: 46_027,
+        basis: 'input',
+      },
+    ],
+    headline: { key: 'vacancyTotal', amountCents: 46_027 },
+    assumptionKeysUsed: [],
+    secondaryLines: [
+      {
+        key: 'maxExtraVacantDays',
+        label: {
+          en: 'Extra vacant days the increase could pay for',
+          es: 'Días adicionales de vacancia que cubriría el aumento',
+        },
+        amountCents: 913, // 9.13 DAYS, not $9.13
+        basis: 'input',
+      },
+    ],
+  };
+
+  const markup = renderToStaticMarkup(
+    <ResultPanel
+      result={WITH_SECONDARY}
+      locale="en"
+      values={{}}
+      sourceSlug="vacancy-cost"
+      leadIntent="lease-out"
+    />
+  );
+
+  it('the headline label follows the headline key, not net proceeds', () => {
+    expect(markup).toContain('Estimated cost of the vacancy');
+    expect(markup).not.toContain('Estimated net proceeds');
+  });
+
+  it('the days figure renders as days, never as a dollar amount', () => {
+    expect(markup).toContain('9.13 days');
+    expect(markup).not.toContain('$9.13');
+  });
+
+  it('the days figure never folds into a money total', () => {
+    // 46_027 + 913 = 46_940 → the forbidden cross-unit figure.
+    expect(markup).not.toContain('$469.40');
+    expect(markup).toContain('$460.27');
   });
 });

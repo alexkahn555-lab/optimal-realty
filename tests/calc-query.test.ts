@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseCalcState, serializeCalcState } from '@/components/calc/query';
 import { NET_PROCEEDS_ENGINE } from '@/lib/calc/net-proceeds';
+import { VACANCY_COST_ENGINE } from '@/lib/calc/vacancy-cost';
 import type { CalcFormValues } from '@/lib/calc/registry';
 
 /**
@@ -86,5 +87,42 @@ describe('calc query codec', () => {
       '?n=3.7'
     );
     expect(parsed).toEqual({ n: 4 });
+  });
+});
+
+/** 5e — the codec roundtrip on the second engine's FieldSpec. */
+describe('calc query codec — vacancy-cost (5e)', () => {
+  const FIELDS_V = VACANCY_COST_ENGINE.fields;
+  const DEFAULTS_V: CalcFormValues = {
+    vacantDays: 0,
+    turnoverCost: 0,
+    proposedRentIncrease: 0,
+    leaseMonths: 12,
+  };
+
+  it('roundtrips non-default values and omits defaults', () => {
+    const values: CalcFormValues = {
+      ...DEFAULTS_V,
+      monthlyRent: 2_000,
+      vacantDays: 7,
+    };
+    const query = serializeCalcState(FIELDS_V, values, DEFAULTS_V);
+    const params = new URLSearchParams(query);
+    expect(params.get('leaseMonths')).toBeNull();
+    expect(params.get('turnoverCost')).toBeNull();
+    expect(params.get('proposedRentIncrease')).toBeNull();
+    expect(params.get('monthlyRent')).toBe('2000');
+    expect(params.get('vacantDays')).toBe('7');
+    expect(parseCalcState(FIELDS_V, `?${query}`)).toEqual({
+      monthlyRent: 2_000,
+      vacantDays: 7,
+    });
+  });
+
+  it('drops out-of-range vacancy params on parse (wide bands still bound)', () => {
+    expect(parseCalcState(FIELDS_V, '?monthlyRent=0')).toEqual({}); // min 1
+    expect(parseCalcState(FIELDS_V, '?vacantDays=3651')).toEqual({}); // max 3650
+    expect(parseCalcState(FIELDS_V, '?leaseMonths=121')).toEqual({}); // max 120
+    expect(parseCalcState(FIELDS_V, '?vacantDays=7')).toEqual({ vacantDays: 7 });
   });
 });

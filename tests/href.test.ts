@@ -63,6 +63,13 @@ describe('href()', () => {
     expect(href('tool.net-proceeds', 'es')).toBe('/es/herramientas/ganancia-neta');
   });
 
+  it('the vacancy-cost tool round-trips both locales (5e route map)', () => {
+    expect(href('tool.vacancy-cost', 'en')).toBe('/en/tools/vacancy-cost');
+    expect(href('tool.vacancy-cost', 'es')).toBe(
+      '/es/herramientas/costo-de-vacancia'
+    );
+  });
+
   it('portal subpage routes (Phase 3)', () => {
     expect(href('subpage.sellers-home-valuation', 'en')).toBe(
       '/en/sellers/home-valuation'

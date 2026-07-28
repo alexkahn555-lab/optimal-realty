@@ -4,7 +4,7 @@ import { ASSUMPTIONS } from '@/config/assumptions';
 import { UI } from '@/content/ui-strings';
 import { CALCS, type CalcFormValues } from '@/lib/calc/registry';
 import type { FieldSpec } from '@/lib/calc/types';
-import { ALL_FAQS, resolvedFaqs } from '@/lib/content/loaders';
+import { ALL_FAQS, portalLabel, resolvedFaqs } from '@/lib/content/loaders';
 import { AssumptionsTable } from '@/components/calc/AssumptionsTable';
 import { CalcIsland } from '@/components/calc/CalcIslandLazy';
 import { CalcShell } from '@/components/calc/CalcShell';
@@ -85,7 +85,8 @@ export function ToolView({ tool, locale }: { tool: ToolDef; locale: Locale }): J
   const crumbs: Crumb[] = [
     { id: 'home', label: UI.breadcrumb.home },
     { id: 'tools', label: UI.nav.tools },
-    { id: `tool.${tool.id}`, label: tool.title },
+    // portalLabel (5e): an unfilled tool title degrades to the structural slug.
+    { id: `tool.${tool.id}`, label: portalLabel(tool) },
   ];
 
   return (

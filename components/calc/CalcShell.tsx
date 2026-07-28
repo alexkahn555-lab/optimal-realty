@@ -39,6 +39,12 @@ export interface CalcShellProps {
 const TK = /\bTK_/;
 const isTK = (value: Localized): boolean => TK.test(value.en) || TK.test(value.es);
 
+/** Marker id for PlaceholderTK, prefix dropped (the 4b convention) — the id
+ *  must never re-introduce a raw marker into the served document. */
+function placeholderId(value: Localized): string {
+  return (TK.test(value.en) ? value.en : value.es).replace(TK, '');
+}
+
 function GatedProse({
   value,
   locale,
@@ -46,7 +52,7 @@ function GatedProse({
   value: Localized;
   locale: Locale;
 }): JSX.Element {
-  if (isTK(value)) return <PlaceholderTK id={value.en} />;
+  if (isTK(value)) return <PlaceholderTK id={placeholderId(value)} />;
   return <Prose>{t(value, locale)}</Prose>;
 }
 
@@ -66,7 +72,13 @@ export function CalcShell({
     <Section className="py-16 md:py-24">
       <div className="space-y-10">
         <Breadcrumbs items={crumbs} locale={locale} />
-        <Heading level={1}>{t(tool.answer.question, locale)}</Heading>
+        <Heading level={1}>
+          {isTK(tool.answer.question) ? (
+            <PlaceholderTK id={placeholderId(tool.answer.question)} />
+          ) : (
+            t(tool.answer.question, locale)
+          )}
+        </Heading>
         <AnswerBlock block={tool.answer} locale={locale} />
 
         {children}

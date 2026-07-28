@@ -26,6 +26,19 @@ const atAlias: Plugin = {
   },
 };
 
+/** 5e: measure a module with the chrome dictionary externalized, so the
+ *  number is the ENGINE's own weight, not ui-strings' (the island bundle
+ *  above already pays for ui-strings once). */
+const uiStringsExternal: Plugin = {
+  name: 'ui-strings-external',
+  setup(b) {
+    b.onResolve({ filter: /content\/ui-strings$/ }, (args) => ({
+      path: args.path,
+      external: true,
+    }));
+  },
+};
+
 describe('phase 3 byte budgets', () => {
   it('CalcIsland is at most 25 KB gzipped', async () => {
     const result = await build({
@@ -52,5 +65,28 @@ describe('phase 3 byte budgets', () => {
       `[budget] CalcIsland: ${output!.contents.byteLength} B raw, ${gzipped} B gzipped`
     );
     expect(gzipped).toBeLessThanOrEqual(25 * 1024);
+  });
+
+  it('the vacancy-cost engine alone is at most 2 KB gzipped (5e)', async () => {
+    const result = await build({
+      entryPoints: [join(ROOT, 'lib/calc/vacancy-cost.ts')],
+      bundle: true,
+      minify: true,
+      write: false,
+      format: 'esm',
+      external: ['react', 'react-dom', 'react/jsx-runtime', 'next'],
+      define: { 'process.env.NODE_ENV': '"production"' },
+      plugins: [uiStringsExternal, atAlias],
+      logLevel: 'silent',
+    });
+
+    const output = result.outputFiles[0];
+    expect(output).toBeDefined();
+    const gzipped = gzipSync(output!.contents).byteLength;
+    // Surfaced in the completion report.
+    console.info(
+      `[budget] vacancy-cost engine: ${output!.contents.byteLength} B raw, ${gzipped} B gzipped`
+    );
+    expect(gzipped).toBeLessThanOrEqual(2 * 1024);
   });
 });

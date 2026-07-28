@@ -187,4 +187,13 @@ export const ASSUMPTIONS: AssumptionSet = {
     asOf: '2026-07-19',
     note: NOTE('Conventional heuristic. Client may prefer others. D-03.'),
   },
+
+  /* ---- Vacancy cost (5e) ------------------------------------------------- */
+  leaseMonthsDefault: {
+    key: 'leaseMonthsDefault',
+    value: 12,
+    basis: 'unconfirmed-default',
+    asOf: '2026-07-28',
+    note: NOTE('Default lease term (months) for the rent-increase trade-off.'),
+  },
 } as const;

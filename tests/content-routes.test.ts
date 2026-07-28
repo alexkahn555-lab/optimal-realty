@@ -19,6 +19,7 @@ import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
 import { PROPERTY_MANAGEMENT_SUBPAGE } from '@/content/subpages/property-management';
 import { SELLING_PROCESS_SUBPAGE } from '@/content/subpages/selling-process';
 import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
+import { VACANCY_COST_TOOL } from '@/content/tools/vacancy-cost';
 import { AnswerBlock } from '@/components/seo';
 import { href } from '@/lib/seo/href';
 import { metaFor } from '@/lib/seo/meta';
@@ -115,7 +116,21 @@ describe('content ↔ href registry consistency', () => {
       'investors-1031-exchange',
       'landlords-property-management',
     ]);
-    expect(publishedTools().map((t) => t.id)).toEqual(['net-proceeds']);
+    expect(publishedTools().map((t) => t.id)).toEqual([
+      'net-proceeds',
+      'vacancy-cost',
+    ]);
+  });
+
+  it('the vacancy-cost tool slug matches TOOL_SLUG (5e route map)', () => {
+    expect(href('tool.vacancy-cost', 'en')).toBe(
+      `/en/tools/${VACANCY_COST_TOOL.slug.en}`
+    );
+    expect(href('tool.vacancy-cost', 'es')).toBe(
+      `/es/herramientas/${VACANCY_COST_TOOL.slug.es}`
+    );
+    expect(VACANCY_COST_TOOL.engineId).toBe('vacancy-cost');
+    expect(VACANCY_COST_TOOL.portalIds).toEqual(['landlords']);
   });
 });
 
@@ -298,6 +313,60 @@ describe('mode-sensitive subpage publish gate (5d)', () => {
         expect(meta.description).toBe('Optimal Realty');
         expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
       }
+    }
+  });
+});
+
+/**
+ * Dispatch 5e — the 5c/5d mode split, exercised on the TOOL: vacancy-cost
+ * ships title, question, answer, method note and disclaimer as TK_ markers
+ * and must STILL publish in report mode; strict unpublishes it while the
+ * clean net-proceeds tool stays.
+ */
+describe('mode-sensitive tool publish gate (5e)', () => {
+  afterEach(() => {
+    delete process.env.CONTENT_STRICT;
+  });
+
+  it('the vacancy tool carries TK title, question, answer, method and disclaimer', () => {
+    for (const locale of ['en', 'es'] as const) {
+      expect(VACANCY_COST_TOOL.title[locale]).toMatch(/^TK_/);
+      expect(VACANCY_COST_TOOL.answer.question[locale]).toMatch(/^TK_/);
+      expect(VACANCY_COST_TOOL.answer.answer[locale]).toMatch(/^TK_/);
+      expect(VACANCY_COST_TOOL.methodNote[locale]).toMatch(/^TK_/);
+      expect(VACANCY_COST_TOOL.disclaimer[locale]).toMatch(/^TK_/);
+    }
+    expect(VACANCY_COST_TOOL.faqIds).toEqual([]);
+    expect(VACANCY_COST_TOOL.leadCapture.enabled).toBe(true);
+  });
+
+  it('report mode (default): the TK tool publishes', () => {
+    expect(publishedTools().map((t) => t.id)).toContain('vacancy-cost');
+  });
+
+  it('strict mode: the TK tool unpublishes; net-proceeds stays', () => {
+    process.env.CONTENT_STRICT = '1';
+    expect(publishedTools().map((t) => t.id)).toEqual(['net-proceeds']);
+  });
+
+  it('portalLabel degrades the unfilled tool title to the structural slug', () => {
+    expect(portalLabel(VACANCY_COST_TOOL)).toEqual(VACANCY_COST_TOOL.slug);
+    expect(portalLabel(NET_PROCEEDS_TOOL)).toEqual(NET_PROCEEDS_TOOL.title);
+  });
+
+  it('metaFor for the tool falls to the site name — never a marker', () => {
+    for (const locale of ['en', 'es'] as const) {
+      const meta = metaFor(
+        {
+          id: 'tool.vacancy-cost',
+          title: VACANCY_COST_TOOL.title,
+          description: VACANCY_COST_TOOL.answer.answer,
+        },
+        locale
+      );
+      expect(meta.title).toBeUndefined();
+      expect(meta.description).toBe('Optimal Realty');
+      expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
     }
   });
 });

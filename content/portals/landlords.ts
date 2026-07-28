@@ -51,7 +51,7 @@ export const LANDLORDS_PORTAL: Portal = {
       detail: { en: 'TK_PORTAL_LANDLORDS_STEP_4_DETAIL', es: 'TK_PORTAL_LANDLORDS_STEP_4_DETAIL' },
     },
   ],
-  toolIds: [], // landlord calculators do not exist yet — 5d+ wires the rack
+  toolIds: ['vacancy-cost'], // 5e — the first landlord calculator
   subpageIds: ['landlords-property-management'],
   adviceIds: [], // client counsel never blocks a route — AdviceList renders null
   faqIds: [],

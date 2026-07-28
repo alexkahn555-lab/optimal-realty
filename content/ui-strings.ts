@@ -195,6 +195,15 @@ export const UI = {
       en: "Seller pays the owner's title policy",
       es: 'El vendedor paga la póliza de título',
     },
+    // Vacancy cost (5e)
+    monthlyRent: { en: 'Monthly rent', es: 'Renta mensual' },
+    vacantDays: { en: 'Vacant days', es: 'Días de vacancia' },
+    turnoverCost: { en: 'Turnover cost', es: 'Costo de rotación' },
+    proposedRentIncrease: {
+      en: 'Proposed rent increase (monthly)',
+      es: 'Aumento de renta propuesto (mensual)',
+    },
+    leaseMonths: { en: 'Lease term (months)', es: 'Plazo del contrato (meses)' },
   },
 
   /* ---- Calculator enum value labels ---------------------------------------- */
@@ -222,6 +231,19 @@ export const UI = {
     flaggedDefault: {
       en: 'Unverified default — edit to your numbers.',
       es: 'Valor predeterminado sin verificar — edítelo con sus cifras.',
+    },
+    // Vacancy cost (5e)
+    vacantDays: {
+      en: 'Days the unit sits (or would sit) empty.',
+      es: 'Días que la unidad está (o estaría) vacía.',
+    },
+    turnoverCost: {
+      en: 'One-time make-ready costs between tenants.',
+      es: 'Costos únicos de preparación entre inquilinos.',
+    },
+    proposedRentIncrease: {
+      en: 'Enables the extra-vacant-days trade-off line.',
+      es: 'Habilita la línea de días adicionales de vacancia.',
     },
   },
 
@@ -267,13 +289,27 @@ export const UI = {
       en: 'Estimated shortfall at closing',
       es: 'Déficit estimado al cierre',
     },
+    // Vacancy cost (5e)
+    vacancyLoss: { en: 'Rent lost to vacancy', es: 'Renta perdida por vacancia' },
+    turnoverCost: { en: 'Turnover cost', es: 'Costo de rotación' },
+    vacancyTotal: {
+      en: 'Estimated cost of the vacancy',
+      es: 'Costo estimado de la vacancia',
+    },
+    maxExtraVacantDays: {
+      en: 'Extra vacant days the increase could pay for',
+      es: 'Días adicionales de vacancia que cubriría el aumento',
+    },
   },
 
   /* ---- Calculator shell / result panel chrome ------------------------------ */
   calc: {
     estimateTag: { en: 'Estimate', es: 'Estimación' },
-    oneTimeHeading: { en: 'One-time costs at closing', es: 'Costos únicos al cierre' },
+    // Generalized in 5e ('at closing' dropped): the same heading now serves
+    // engines whose one-time costs are not closing costs (vacancy cost).
+    oneTimeHeading: { en: 'One-time costs', es: 'Costos únicos' },
     monthlyHeading: { en: 'Monthly', es: 'Mensual' },
+    daysUnit: { en: 'days', es: 'días' },
     emailBreakdown: {
       en: 'Email me this breakdown',
       es: 'Envíenme este desglose por correo',

@@ -4,9 +4,15 @@ import { UI } from '@/content/ui-strings';
 import { t } from '@/lib/i18n';
 import { LeadForm } from '@/components/forms';
 import type { CalcFormValues } from '@/lib/calc/registry';
-import type { EngineResult, LeadIntent, LedgerLine, Locale } from '@/lib/types';
+import type {
+  EngineResult,
+  LeadIntent,
+  LedgerLine,
+  Locale,
+  Localized,
+} from '@/lib/types';
 
-import { formatCents } from './labels';
+import { DAY_VALUED_KEYS, formatCents, formatDayHundredths } from './labels';
 
 /**
  * Result panel (Part 7.4): marine background, ONE large mono headline figure,
@@ -17,12 +23,26 @@ import { formatCents } from './labels';
  */
 
 export interface ResultPanelProps {
-  result: (EngineResult & { grossCents?: number }) | null;
+  result:
+    | (EngineResult & {
+        grossCents?: number;
+        /** Engine extras that are OUTPUTS but not costs (5e): rendered in
+         *  their own block under the headline, never inside a cost ledger. */
+        secondaryLines?: LedgerLine[];
+      })
+    | null;
   locale: Locale;
   /** Current form values (display units) — snapshotted into the lead payload. */
   values: CalcFormValues;
   sourceSlug: string;
   leadIntent: LeadIntent;
+}
+
+/** Day-valued lines format as days (labels.ts); everything else is USD. */
+function formatLineAmount(line: LedgerLine, locale: Locale): string {
+  return DAY_VALUED_KEYS.has(line.key)
+    ? formatDayHundredths(line.amountCents, locale)
+    : formatCents(line.amountCents, locale);
 }
 
 function Ledger({
@@ -44,7 +64,7 @@ function Ledger({
             {line.flagged ? ' †' : ''}
           </dt>
           <dd className="font-mono text-sm tabular-nums text-bone">
-            {formatCents(line.amountCents, locale)}
+            {formatLineAmount(line, locale)}
           </dd>
         </div>
       ))}
@@ -62,7 +82,13 @@ export function ResultPanel({
   if (result === null) return null;
 
   const negative = result.headline.amountCents < 0;
-  const headlineLabel = negative ? UI.ledger.shortfall : UI.ledger.netProceeds;
+  // The headline label follows the headline KEY (5e: a second engine ships a
+  // different headline); a key without a ledger label is an authoring bug
+  // caught by the fieldspec parity tests, so netProceeds stays the fallback.
+  const ledgerLabels = UI.ledger as Record<string, Localized>;
+  const headlineLabel = negative
+    ? UI.ledger.shortfall
+    : (ledgerLabels[result.headline.key] ?? UI.ledger.netProceeds);
 
   const payload = {
     inputs: values,
@@ -79,6 +105,13 @@ export function ResultPanel({
         amountCents,
         basis,
       })),
+      ...(result.secondaryLines
+        ? {
+            secondaryLines: result.secondaryLines.map(
+              ({ key, amountCents, basis }) => ({ key, amountCents, basis })
+            ),
+          }
+        : {}),
     },
   };
 
@@ -99,6 +132,14 @@ export function ResultPanel({
       >
         {formatCents(result.headline.amountCents, locale)}
       </p>
+
+      {result.secondaryLines && result.secondaryLines.length > 0 ? (
+        // Secondary OUTPUTS (not costs — e.g. a day count): their own block,
+        // directly under the headline, outside both cost ledgers.
+        <div className="mt-6">
+          <Ledger lines={result.secondaryLines} locale={locale} />
+        </div>
+      ) : null}
 
       {result.monthlyLines.length > 0 ? (
         <div className="mt-8">

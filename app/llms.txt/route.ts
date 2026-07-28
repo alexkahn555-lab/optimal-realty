@@ -37,7 +37,7 @@ export function GET(): Response {
     ),
     line('Tools', 'tools'),
     ...publishedTools().map((tool) =>
-      line(tool.title.en, `tool.${tool.id}` as RouteId)
+      line(portalLabel(tool).en, `tool.${tool.id}` as RouteId)
     ),
     line('Listings', 'listings'),
     // Labels run through the privacy degradation; sold pages are permanent.
