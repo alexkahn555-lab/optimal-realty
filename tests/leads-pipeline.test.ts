@@ -71,9 +71,11 @@ describe('step 1 — parse', () => {
   });
 
   it('rejects an unregistered source (unpublished tool slug) with 400', async () => {
-    // 'tax-reset' is a valid CalcId but no such tool is published (Phase 5).
+    // 'homestead-portability' is a valid CalcId but no such tool is published
+    // — deferred out of Phase 5 (the pre-5h fixture was 'tax-reset', which
+    // 5h published).
     const res = await runLeadPipeline(
-      validBody({ sourceType: 'tool', sourceSlug: 'tax-reset' }),
+      validBody({ sourceType: 'tool', sourceSlug: 'homestead-portability' }),
       CTX,
       mockDeps()
     );

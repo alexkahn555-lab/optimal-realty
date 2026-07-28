@@ -3,8 +3,10 @@
 import { UI } from '@/content/ui-strings';
 import { t } from '@/lib/i18n';
 import { LeadForm } from '@/components/forms';
+import { TwoBarCompare } from '@/components/charts/TwoBarCompare';
 import type { CalcFormValues } from '@/lib/calc/registry';
 import type {
+  Basis,
   EngineResult,
   LeadIntent,
   LedgerLine,
@@ -37,6 +39,22 @@ export interface ResultPanelProps {
         /** Engine extras that are OUTPUTS but not costs (5e): rendered in
          *  their own block under the headline, never inside a cost ledger. */
         secondaryLines?: LedgerLine[];
+        /** Two-scenario comparison bars (5h) — keyed into UI.ledger. The
+         *  series are SCENARIOS, never places (Part 1.4). */
+        compareBars?: {
+          aKey: string;
+          bKey: string;
+          aCents: number;
+          bCents: number;
+        };
+        /** Year-by-year projection TABLE (5h) — never folded into a ledger
+         *  or the headline. */
+        projection?: {
+          year: number;
+          assessedCents: number;
+          taxCents: number;
+          basis: Basis;
+        }[];
       })
     | null;
   locale: Locale;
@@ -139,6 +157,9 @@ export function ResultPanel({
             ),
           }
         : {}),
+      ...(result.projection && result.projection.length > 0
+        ? { projection: result.projection }
+        : {}),
     },
   };
 
@@ -183,6 +204,60 @@ export function ResultPanel({
         </h3>
         <Ledger lines={result.oneTimeLines} locale={locale} />
       </div>
+
+      {result.compareBars &&
+      ledgerLabels[result.compareBars.aKey] &&
+      ledgerLabels[result.compareBars.bKey] ? (
+        // Scenario comparison (5h): rendered on bone so the ink axis text and
+        // the teal/coral scenario bars keep their Part 1.4 contrast contract.
+        <div className="mt-8 bg-bone px-4 py-4">
+          <TwoBarCompare
+            aLabel={ledgerLabels[result.compareBars.aKey]!}
+            bLabel={ledgerLabels[result.compareBars.bKey]!}
+            aCents={result.compareBars.aCents}
+            bCents={result.compareBars.bCents}
+            locale={locale}
+          />
+        </div>
+      ) : null}
+
+      {result.projection && result.projection.length > 0 ? (
+        <div className="mt-8">
+          <h3 className="font-mono text-xs uppercase tracking-wider text-teal">
+            {t(UI.calc.projectionHeading, locale)}
+          </h3>
+          <table className="mt-2 w-full">
+            <thead>
+              <tr className="border-b border-bone/20">
+                <th className="py-1 text-left font-mono text-xs uppercase tracking-wider text-bone">
+                  {t(UI.calc.projectionYearCol, locale)}
+                </th>
+                <th className="py-1 text-right font-mono text-xs uppercase tracking-wider text-bone">
+                  {t(UI.calc.projectionAssessedCol, locale)}
+                </th>
+                <th className="py-1 text-right font-mono text-xs uppercase tracking-wider text-bone">
+                  {t(UI.calc.projectionTaxCol, locale)}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.projection.map((row) => (
+                <tr key={row.year} className="border-b border-bone/20">
+                  <td className="py-1 font-mono text-sm tabular-nums text-bone">
+                    {row.year}
+                  </td>
+                  <td className="py-1 text-right font-mono text-sm tabular-nums text-bone">
+                    {formatCents(row.assessedCents, locale)}
+                  </td>
+                  <td className="py-1 text-right font-mono text-sm tabular-nums text-bone">
+                    {formatCents(row.taxCents, locale)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
 
       <details className="mt-8">
         <summary className="cursor-pointer font-mono text-xs uppercase tracking-wider text-bone">

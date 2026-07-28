@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseCalcState, serializeCalcState } from '@/components/calc/query';
 import { CONDO_ASSESSMENT_ENGINE } from '@/lib/calc/condo-assessment';
+import { TAX_RESET_ENGINE } from '@/lib/calc/tax-reset';
 import { NET_PROCEEDS_ENGINE } from '@/lib/calc/net-proceeds';
 import { RENTAL_CASHFLOW_ENGINE } from '@/lib/calc/rental-cashflow';
 import { VACANCY_COST_ENGINE } from '@/lib/calc/vacancy-cost';
@@ -202,5 +203,44 @@ describe('calc query codec — condo-assessment (5g)', () => {
     expect(parseCalcState(FIELDS_C, '?unitSharePct=0.8654')).toEqual({
       unitSharePct: 0.8654,
     });
+  });
+});
+
+/** 5h — the codec on the tax-reset FieldSpec (booleans, mills, years). */
+describe('calc query codec — tax-reset (5h)', () => {
+  const FIELDS_T = TAX_RESET_ENGINE.fields;
+  const DEFAULTS_T: CalcFormValues = { projectionYears: 5 };
+
+  it('roundtrips set values incl. the homestead boolean and fractional mills', () => {
+    const values: CalcFormValues = {
+      ...DEFAULTS_T,
+      currentAssessedValue: 150_000,
+      currentExemptions: 50_000,
+      purchasePrice: 650_000,
+      millageRate: 19.8,
+      buyerIntendsHomestead: true,
+      buyerExemptions: 50_000,
+      purchaseYear: 2026,
+    };
+    const query = serializeCalcState(FIELDS_T, values, DEFAULTS_T);
+    const params = new URLSearchParams(query);
+    expect(params.get('projectionYears')).toBeNull(); // default omitted
+    expect(params.get('millageRate')).toBe('19.8');
+    expect(params.get('buyerIntendsHomestead')).toBe('1');
+    expect(parseCalcState(FIELDS_T, `?${query}`)).toEqual({
+      currentAssessedValue: 150_000,
+      currentExemptions: 50_000,
+      purchasePrice: 650_000,
+      millageRate: 19.8,
+      buyerIntendsHomestead: true,
+      buyerExemptions: 50_000,
+      purchaseYear: 2026,
+    });
+  });
+
+  it('drops out-of-range tax params on parse', () => {
+    expect(parseCalcState(FIELDS_T, '?millageRate=101')).toEqual({}); // max 100
+    expect(parseCalcState(FIELDS_T, '?purchaseYear=1989')).toEqual({}); // min 1990
+    expect(parseCalcState(FIELDS_T, '?projectionYears=31')).toEqual({}); // max 30
   });
 });

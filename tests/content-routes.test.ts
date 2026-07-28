@@ -19,6 +19,7 @@ import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
 import { PROPERTY_MANAGEMENT_SUBPAGE } from '@/content/subpages/property-management';
 import { SELLING_PROCESS_SUBPAGE } from '@/content/subpages/selling-process';
 import { CONDO_ASSESSMENT_TOOL } from '@/content/tools/condo-assessment-exposure';
+import { TAX_RESET_TOOL } from '@/content/tools/property-tax-reset';
 import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
 import { RENTAL_CASHFLOW_TOOL } from '@/content/tools/rental-cash-flow';
 import { VACANCY_COST_TOOL } from '@/content/tools/vacancy-cost';
@@ -123,7 +124,21 @@ describe('content ↔ href registry consistency', () => {
       'vacancy-cost',
       'rental-cashflow',
       'condo-assessment',
+      'tax-reset',
     ]);
+  });
+
+  it('the tax-reset tool slug matches TOOL_SLUG (5h route map)', () => {
+    expect(href('tool.tax-reset', 'en')).toBe(
+      `/en/tools/${TAX_RESET_TOOL.slug.en}`
+    );
+    expect(href('tool.tax-reset', 'es')).toBe(
+      `/es/herramientas/${TAX_RESET_TOOL.slug.es}`
+    );
+    expect(TAX_RESET_TOOL.slug.en).toBe('property-tax-reset');
+    expect(TAX_RESET_TOOL.slug.es).toBe('reajuste-del-impuesto-predial');
+    expect(TAX_RESET_TOOL.engineId).toBe('tax-reset');
+    expect(TAX_RESET_TOOL.portalIds).toEqual(['buyers']);
   });
 
   it('the condo-assessment tool slug matches TOOL_SLUG (5g route map)', () => {
@@ -384,7 +399,31 @@ describe('mode-sensitive tool publish gate (5e)', () => {
     expect(portalLabel(VACANCY_COST_TOOL)).toEqual(VACANCY_COST_TOOL.slug);
     expect(portalLabel(RENTAL_CASHFLOW_TOOL)).toEqual(RENTAL_CASHFLOW_TOOL.slug);
     expect(portalLabel(CONDO_ASSESSMENT_TOOL)).toEqual(CONDO_ASSESSMENT_TOOL.slug);
+    expect(portalLabel(TAX_RESET_TOOL)).toEqual(TAX_RESET_TOOL.slug);
     expect(portalLabel(NET_PROCEEDS_TOOL)).toEqual(NET_PROCEEDS_TOOL.title);
+  });
+
+  it('the tax tool carries TK prose everywhere; metaFor falls to the site name (5h)', () => {
+    for (const locale of ['en', 'es'] as const) {
+      expect(TAX_RESET_TOOL.title[locale]).toMatch(/^TK_/);
+      expect(TAX_RESET_TOOL.answer.question[locale]).toMatch(/^TK_/);
+      expect(TAX_RESET_TOOL.answer.answer[locale]).toMatch(/^TK_/);
+      expect(TAX_RESET_TOOL.methodNote[locale]).toMatch(/^TK_/);
+      expect(TAX_RESET_TOOL.disclaimer[locale]).toMatch(/^TK_/);
+      const meta = metaFor(
+        {
+          id: 'tool.tax-reset',
+          title: TAX_RESET_TOOL.title,
+          description: TAX_RESET_TOOL.answer.answer,
+        },
+        locale
+      );
+      expect(meta.title).toBeUndefined();
+      expect(meta.description).toBe('Optimal Realty');
+      expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
+    }
+    expect(TAX_RESET_TOOL.faqIds).toEqual([]);
+    expect(TAX_RESET_TOOL.leadCapture.enabled).toBe(true);
   });
 
   it('the condo tool carries TK prose everywhere; metaFor falls to the site name (5g)', () => {

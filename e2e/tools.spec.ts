@@ -568,3 +568,203 @@ test('cross-locale condo segments 404', async ({ page }) => {
     expect(response?.status(), path).toBe(404);
   }
 });
+
+/* ==========================================================================
+ * Dispatch 5h — the property tax reset calculator (the last Phase 5 engine):
+ * TRIM-notice inputs with NO millage/exemption defaults, the two-scenario
+ * comparison chart (never places), the projection table, and annual-only
+ * output (no monthly block).
+ * ========================================================================== */
+
+const TAX_EN = '/en/tools/property-tax-reset';
+const TAX_ES = '/es/herramientas/reajuste-del-impuesto-predial';
+
+async function fillTaxBaseline(page: import('@playwright/test').Page) {
+  await page.locator('#calc-currentAssessedValue').fill('150000');
+  await page.locator('#calc-currentExemptions').fill('50000');
+  await page.locator('#calc-purchasePrice').fill('650000');
+  await page.locator('#calc-millageRate').fill('19.8');
+  await page.locator('#calc-buyerIntendsHomestead').check();
+  await page.locator('#calc-buyerExemptions').fill('50000');
+  await page.locator('#calc-purchaseYear').fill('2026');
+}
+
+for (const { locale, path } of [
+  { locale: 'en' as const, path: TAX_EN },
+  { locale: 'es' as const, path: TAX_ES },
+]) {
+  test(`tax ${locale}: visible placeholders (H1, answer, method, disclaimer), zero raw TK_`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    await expect(
+      page.getByRole('heading', {
+        level: 1,
+        name: '⟨ TK · TOOL_TAX_RESET_QUESTION ⟩',
+      })
+    ).toBeVisible();
+    await expect(page.getByText('⟨ TK · TOOL_TAX_RESET_ANSWER ⟩')).toBeVisible();
+    await expect(page.getByText('⟨ TK · TOOL_TAX_RESET_METHOD ⟩')).toBeVisible();
+    await expect(
+      page.getByText('⟨ TK · TOOL_TAX_RESET_DISCLAIMER ⟩')
+    ).toBeVisible();
+    expect(await page.title()).toBe(SITE_NAME);
+    const html = await page.content();
+    expect(/\bTK_/.test(html), `${path} served a raw TK_ marker`).toBe(false);
+  });
+}
+
+test('tax: no field carries a prefilled TRIM figure; projection horizon is the only default', async ({
+  page,
+}) => {
+  await page.goto(TAX_EN);
+  for (const key of [
+    'currentAssessedValue',
+    'currentExemptions',
+    'purchasePrice',
+    'millageRate',
+    'buyerExemptions',
+    'purchaseYear',
+  ]) {
+    await expect(page.locator(`#calc-${key}`)).toHaveValue('');
+  }
+  await expect(page.locator('#calc-projectionYears')).toHaveValue('5');
+});
+
+test('tax golden parity in the DOM: $9,900 reset, two-bar chart, projection table', async ({
+  page,
+}) => {
+  await page.goto(TAX_EN);
+  await fillTaxBaseline(page);
+
+  const headline = page.getByTestId('calc-headline');
+  await expect(headline).toBeVisible();
+  await expect(headline).toHaveText('$9,900.00');
+  await expect(page.getByText(UI.ledger.taxDifference.en).first()).toBeVisible();
+  await expect(page.getByText(UI.calc.estimateTag.en).first()).toBeVisible();
+
+  // The two-scenario chart: exactly two bars, current (teal) vs new (coral).
+  const chart = page.getByTestId('two-bar-compare');
+  await expect(chart).toBeVisible();
+  await expect(chart.locator('rect')).toHaveCount(2);
+  await expect(chart.locator('rect.fill-teal')).toHaveCount(1);
+  await expect(chart.locator('rect.fill-coral')).toHaveCount(1);
+
+  // The projection table (default 5-year horizon), exact golden cents.
+  await expect(page.getByText(UI.calc.projectionHeading.en)).toBeVisible();
+  await expect(page.getByText('2028', { exact: true })).toBeVisible();
+  await expect(page.getByText('$12,266.10')).toBeVisible();
+
+  // Annual figures only — no monthly block ever.
+  await expect(
+    page.getByText(UI.calc.monthlyHeading.en, { exact: true })
+  ).toHaveCount(0);
+});
+
+test('tax: assessed above purchase reads as a plain negative difference', async ({
+  page,
+}) => {
+  await page.goto(TAX_EN);
+  await fillTaxBaseline(page);
+  await page.locator('#calc-currentAssessedValue').fill('800000');
+  await page.locator('#calc-purchasePrice').fill('500000');
+  await expect(page.getByTestId('calc-headline')).toHaveText('-$5,940.00');
+});
+
+test('tax: the assumptions table shows ONLY the statutory growth limitation', async ({
+  page,
+}) => {
+  await page.goto(TAX_EN);
+  await expect(page.getByText('saveOurHomesCapPct')).toBeVisible();
+  await expect(page.getByText(UI.calc.basisStatutory.en).first()).toBeVisible();
+  await expect(page.getByText('Jul 28, 2026').first()).toBeVisible();
+  // No millage or exemption row exists — TRIM figures are inputs, not config.
+  expect(await page.content()).not.toContain('millageRateMiamiDade');
+});
+
+test('tax result state serializes; canonical stays bare', async ({ page }) => {
+  await page.goto(TAX_EN);
+  await fillTaxBaseline(page);
+  await expect(page).toHaveURL(/millageRate=19\.8/);
+  await expect(page).toHaveURL(/buyerIntendsHomestead=1/);
+  const canonical = page.locator('link[rel="canonical"]');
+  await expect(canonical).toHaveAttribute(
+    'href',
+    /\/en\/tools\/property-tax-reset$/
+  );
+});
+
+test('tax "email me this breakdown" posts buy attribution with the projection', async ({
+  page,
+}) => {
+  let submission: Record<string, unknown> | null = null;
+  await page.route('**/api/leads', async (route) => {
+    submission = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({ id: 'e2e-mock-id' }),
+    });
+  });
+
+  await page.goto(TAX_EN);
+  await fillTaxBaseline(page);
+  await expect(page.getByTestId('calc-headline')).toBeVisible();
+
+  await page.getByText(UI.calc.emailBreakdown.en).click();
+  await page.locator('#lead-full-name').fill('Test Buyer');
+  await page.locator('#lead-email').fill('buyer@example.com');
+  await page.getByRole('button', { name: UI.form.submit.en }).click();
+  await expect(page.getByText(UI.form.successHeading.en)).toBeVisible();
+
+  expect(submission).not.toBeNull();
+  const body = submission as unknown as Record<string, unknown>;
+  expect(body.sourceType).toBe('tool');
+  expect(body.sourceSlug).toBe('tax-reset');
+  expect(body.intent).toBe('buy');
+  expect(String(body.route)).toBe(TAX_EN);
+
+  const payload = body.payload as {
+    outputs: {
+      headline: { key: string; amountCents: number };
+      projection?: { year: number; taxCents: number }[];
+    };
+  };
+  expect(payload.outputs.headline.key).toBe('taxDifference');
+  expect(payload.outputs.headline.amountCents).toBe(990_000);
+  expect(payload.outputs.projection?.[1]?.taxCents).toBe(1_226_610);
+});
+
+test('tax listed on the tools hub and the buyers rack, both locales', async ({
+  page,
+}) => {
+  await page.goto('/en/tools');
+  await expect(page.locator(`a[href="${TAX_EN}"]`)).toBeVisible();
+  await page.goto('/es/herramientas');
+  await expect(page.locator(`a[href="${TAX_ES}"]`)).toBeVisible();
+  await page.goto('/en/buyers');
+  await expect(page.locator(`a[href="${TAX_EN}"]`)).toBeVisible();
+  expect(/\bTK_/.test(await page.content())).toBe(false);
+  await page.goto('/es/compradores');
+  await expect(page.locator(`a[href="${TAX_ES}"]`)).toBeVisible();
+  expect(/\bTK_/.test(await page.content())).toBe(false);
+});
+
+test('tax URLs sit on both discovery surfaces — marker-free', async ({ page }) => {
+  const sitemap = await (await page.request.get('/sitemap.xml')).text();
+  const llms = await (await page.request.get('/llms.txt')).text();
+  for (const url of [TAX_EN, TAX_ES]) {
+    expect(sitemap, `sitemap.xml must carry ${url}`).toContain(url);
+    expect(llms, `llms.txt must carry ${url}`).toContain(url);
+  }
+});
+
+test('cross-locale tax segments 404', async ({ page }) => {
+  for (const path of [
+    '/en/tools/reajuste-del-impuesto-predial',
+    '/es/herramientas/property-tax-reset',
+  ]) {
+    const response = await page.goto(path);
+    expect(response?.status(), path).toBe(404);
+  }
+});

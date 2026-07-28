@@ -135,4 +135,51 @@ describe('phase 3 byte budgets', () => {
     );
     expect(gzipped).toBeLessThanOrEqual(2 * 1024);
   });
+
+  it('the tax-reset engine alone is at most 2 KB gzipped (5h)', async () => {
+    const result = await build({
+      entryPoints: [join(ROOT, 'lib/calc/tax-reset.ts')],
+      bundle: true,
+      minify: true,
+      write: false,
+      format: 'esm',
+      external: ['react', 'react-dom', 'react/jsx-runtime', 'next'],
+      define: { 'process.env.NODE_ENV': '"production"' },
+      plugins: [uiStringsExternal, atAlias],
+      logLevel: 'silent',
+    });
+
+    const output = result.outputFiles[0];
+    expect(output).toBeDefined();
+    const gzipped = gzipSync(output!.contents).byteLength;
+    // Surfaced in the completion report.
+    console.info(
+      `[budget] tax-reset engine: ${output!.contents.byteLength} B raw, ${gzipped} B gzipped`
+    );
+    expect(gzipped).toBeLessThanOrEqual(2 * 1024);
+  });
+
+  it('the two-bar SVG chart alone is at most 2 KB gzipped (5h)', async () => {
+    const result = await build({
+      entryPoints: [join(ROOT, 'components/charts/TwoBarCompare.tsx')],
+      bundle: true,
+      minify: true,
+      write: false,
+      format: 'esm',
+      jsx: 'automatic',
+      external: ['react', 'react-dom', 'react/jsx-runtime', 'next'],
+      define: { 'process.env.NODE_ENV': '"production"' },
+      plugins: [uiStringsExternal, atAlias],
+      logLevel: 'silent',
+    });
+
+    const output = result.outputFiles[0];
+    expect(output).toBeDefined();
+    const gzipped = gzipSync(output!.contents).byteLength;
+    // Surfaced in the completion report — the chart's own byte cost.
+    console.info(
+      `[budget] TwoBarCompare chart: ${output!.contents.byteLength} B raw, ${gzipped} B gzipped`
+    );
+    expect(gzipped).toBeLessThanOrEqual(2 * 1024);
+  });
 });

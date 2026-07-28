@@ -70,7 +70,7 @@ export const ASSUMPTIONS: AssumptionSet = {
     asOf: '2026-07-19',
     note: NOTE(
       'Applies to transfers OTHER THAN single-family residences. Condo/townhouse ' +
-        'classification for the exemption is D-03 — confirm with title agent. Engine ' +
+        'classification for the carve-out is D-03 — confirm with title agent. Engine ' +
         'treats only single-family as exempt (conservative: over-estimates cost).'
     ),
   },
@@ -133,23 +133,21 @@ export const ASSUMPTIONS: AssumptionSet = {
     note: NOTE('Charged only when an HOA/condo association is involved. Verify amount.'),
   },
 
-  /* ---- Homestead / tax reset (statutory — DO NOT GUESS) ----------------- */
+  /* ---- Homestead / tax reset (statutory — DO NOT GUESS) ------------------
+   * 5h input-model rule (binding): the tax-reset engine takes its rate and
+   * amounts from the parcel's TRIM notice as REQUIRED user inputs. No rate
+   * key and no amount key exists here — the growth limitation below is the
+   * engine's ONLY assumption. (The Phase 1 zero-value composite-rate
+   * placeholder was removed by 5h; nothing consumed it.) */
   saveOurHomesCapPct: {
     key: 'saveOurHomesCapPct',
-    value: 3.0,
+    value: 3,
     basis: 'statutory',
-    cite: 'Save Our Homes assessment cap — VERIFY current mechanics',
-    asOf: '2026-07-19',
-    note: NOTE('Assessment growth limit (3% or CPI, lower) on homesteaded property. D-03.'),
-  },
-  millageRateMiamiDade: {
-    key: 'millageRateMiamiDade',
-    value: 0, // TK — composite millage varies by municipality/district
-    basis: 'market-must-update',
-    asOf: '2026-07-19',
+    cite: 'F.S. 193.155 — VERIFY current limitation',
+    asOf: '2026-07-28',
     note: NOTE(
-      'Composite millage varies by municipality and taxing district. A single ' +
-        'county default is an approximation the UI must state plainly. Verify before tax tools ship.'
+      'Homestead assessment growth limitation per year (the lesser-of-CPI ' +
+        'branch is not modeled). Verify before the tax tool leaves preview.'
     ),
   },
 

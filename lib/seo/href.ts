@@ -66,7 +66,12 @@ const TOOL_SLUG: Record<CalcId, LocalizedSeg> = {
   // ES slug corrected to the Phase 3 dispatch route table ('ganancia-neta',
   // singular); the Phase 1 judgment slug was 'ganancias-netas'. FLAGGED.
   'net-proceeds': { en: 'net-proceeds', es: 'ganancia-neta' },
-  'tax-reset': { en: 'tax-reset', es: 'reajuste-de-impuestos' },
+  // Slugs per the 5h dispatch route map (row 16; supersede the Phase 1
+  // judgment slugs 'tax-reset' / 'reajuste-de-impuestos').
+  'tax-reset': {
+    en: 'property-tax-reset',
+    es: 'reajuste-del-impuesto-predial',
+  },
   'homestead-portability': { en: 'homestead-portability', es: 'portabilidad-de-homestead' },
   // Slugs per the 5g dispatch route map (row 18; supersede the Phase 1
   // judgment slugs 'condo-assessment' / 'derrama-de-condominio').

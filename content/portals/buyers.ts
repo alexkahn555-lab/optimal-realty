@@ -53,7 +53,8 @@ export const BUYERS_PORTAL: Portal = {
       detail: { en: 'TK_PORTAL_BUYERS_STEP_5_DETAIL', es: 'TK_PORTAL_BUYERS_STEP_5_DETAIL' },
     },
   ],
-  toolIds: ['condo-assessment'], // 5g — the first buyer calculator
+  // 5g condo assessment exposure · 5h property tax reset
+  toolIds: ['condo-assessment', 'tax-reset'],
   subpageIds: ['buyers-first-time-buyer-programs'],
   adviceIds: [], // client counsel never blocks a route — AdviceList renders null
   faqIds: [],

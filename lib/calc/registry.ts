@@ -14,6 +14,10 @@ import {
   fromFormValues as rentalFromFormValues,
 } from '@/lib/calc/rental-cashflow';
 import {
+  TAX_RESET_ENGINE,
+  fromFormValues as taxResetFromFormValues,
+} from '@/lib/calc/tax-reset';
+import {
   VACANCY_COST_ENGINE,
   fromFormValues as vacancyFromFormValues,
 } from '@/lib/calc/vacancy-cost';
@@ -22,8 +26,8 @@ import {
  * Engine registry — the island resolves engineId → engine here, so the client
  * bundle contains exactly the engines that pages actually mount. One entry
  * per shipped engine: net-proceeds (Phase 3), vacancy-cost (5e),
- * rental-cashflow (5f), condo-assessment (5g); the remaining two are
- * separate dispatches.
+ * rental-cashflow (5f), condo-assessment (5g), tax-reset (5h — the last
+ * Phase 5 calculator; homestead portability is deferred out of Phase 5).
  */
 
 export type CalcFormValues = Record<string, number | string | boolean>;
@@ -58,5 +62,10 @@ export const CALCS: Partial<Record<CalcId, RegisteredCalc>> = {
   'condo-assessment': {
     engine: CONDO_ASSESSMENT_ENGINE as unknown as CalcEngine<unknown, EngineResult>,
     toInput: condoFromFormValues,
+  },
+  // 5h — TRIM-notice inputs; the growth limitation is the one assumption.
+  'tax-reset': {
+    engine: TAX_RESET_ENGINE as unknown as CalcEngine<unknown, EngineResult>,
+    toInput: taxResetFromFormValues,
   },
 };

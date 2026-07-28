@@ -46,6 +46,22 @@ describe('AssumptionsTable', () => {
     );
   });
 
+  it('renders the 5h growth limitation: statutory basis, cite-backed, dated, note visible', () => {
+    const markup = renderToStaticMarkup(
+      <AssumptionsTable keys={['saveOurHomesCapPct']} locale="en" />
+    );
+    expect(markup).toContain('saveOurHomesCapPct');
+    expect(markup).toContain('Statutory — verify');
+    expect(markup).toContain('Jul 28, 2026');
+    // The verification note renders (marked unverified until confirmed).
+    expect(markup).toContain('[unverified]');
+    // The binding 5h input model: no millage or exemption key exists at all.
+    for (const key of Object.keys(ASSUMPTIONS)) {
+      expect(key.toLowerCase()).not.toContain('millage');
+      expect(key.toLowerCase()).not.toContain('exemption');
+    }
+  });
+
   it('renders the 5f rental keys: three unconfirmed defaults + the market rate, dates visible', () => {
     const keys = [
       'vacancyRatePct',

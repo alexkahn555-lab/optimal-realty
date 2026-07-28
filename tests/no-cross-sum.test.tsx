@@ -214,6 +214,80 @@ describe('both arrays populated: debt service and cash-to-close never meet (5f)'
     expect(markup).not.toContain('$1.13');
   });
 
+  it('tax reset: chart bars and projection table render outside the ledgers (5h)', () => {
+    // The two bars are SCENARIOS (current vs new owner) for one parcel —
+    // never places; the projection is a table whose figures never fold into
+    // the headline or either ledger.
+    const tax = renderToStaticMarkup(
+      <ResultPanel
+        result={{
+          monthlyLines: [],
+          oneTimeLines: [
+            {
+              key: 'currentAnnualTax',
+              label: {
+                en: "Current owner's annual tax",
+                es: 'Impuesto anual del propietario actual',
+              },
+              amountCents: 198_000,
+              basis: 'input',
+            },
+            {
+              key: 'newAnnualTax',
+              label: {
+                en: "New owner's annual tax",
+                es: 'Impuesto anual del nuevo propietario',
+              },
+              amountCents: 1_188_000,
+              basis: 'input',
+            },
+            {
+              key: 'taxDifference',
+              label: {
+                en: 'Estimated annual tax difference',
+                es: 'Diferencia anual estimada del impuesto',
+              },
+              amountCents: 990_000,
+              basis: 'input',
+            },
+          ],
+          headline: { key: 'taxDifference', amountCents: 990_000 },
+          assumptionKeysUsed: [],
+          compareBars: {
+            aKey: 'currentAnnualTax',
+            bKey: 'newAnnualTax',
+            aCents: 198_000,
+            bCents: 1_188_000,
+          },
+          projection: [
+            { year: 2027, assessedCents: 65_000_000, taxCents: 1_188_000, basis: 'statutory' },
+            { year: 2028, assessedCents: 66_950_000, taxCents: 1_226_610, basis: 'statutory' },
+          ],
+        }}
+        locale="en"
+        values={{}}
+        sourceSlug="tax-reset"
+        leadIntent="buy"
+      />
+    );
+    // Chart: exactly two scenario bars, teal/coral, ink labels — no places.
+    expect(tax).toContain('data-testid="two-bar-compare"');
+    expect((tax.match(/<rect/g) ?? []).length).toBe(2);
+    expect(tax).toContain('fill-teal');
+    expect(tax).toContain('fill-coral');
+    expect(tax).toContain('fill-ink');
+    // Projection table renders with its own heading and both year rows.
+    expect(tax).toContain('Projection under the assessment growth limitation');
+    expect(tax).toContain('2027');
+    expect(tax).toContain('$12,266.10');
+    // No projection figure folds into the headline: 990_000 stands alone,
+    // and 990_000 + 1_226_610 = 2_216_610 appears nowhere.
+    expect(tax).toContain('$9,900.00');
+    expect(tax).not.toContain('$22,166.10');
+    // Monthly block absent — this engine produces annual figures only.
+    expect(tax).not.toContain('Monthly');
+  });
+
   it('a negative FUNDING GAP keeps its own label and reads plainly (5g)', () => {
     // Condo exposure, reserves exceeding deferred items (golden case 2):
     // the gap is a negative ONE-TIME line and the headline — never clamped,

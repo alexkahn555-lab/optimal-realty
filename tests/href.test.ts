@@ -88,6 +88,14 @@ describe('href()', () => {
     );
   });
 
+  it('the property-tax-reset tool round-trips both locales (5h route map)', () => {
+    // Slugs per route map row 16 (supersede the Phase 1 judgment slugs).
+    expect(href('tool.tax-reset', 'en')).toBe('/en/tools/property-tax-reset');
+    expect(href('tool.tax-reset', 'es')).toBe(
+      '/es/herramientas/reajuste-del-impuesto-predial'
+    );
+  });
+
   it('portal subpage routes (Phase 3)', () => {
     expect(href('subpage.sellers-home-valuation', 'en')).toBe(
       '/en/sellers/home-valuation'

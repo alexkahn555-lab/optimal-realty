@@ -6,6 +6,10 @@ import {
 } from '@/lib/calc/condo-assessment';
 import { NET_PROCEEDS_ENGINE, fromFormValues } from '@/lib/calc/net-proceeds';
 import {
+  TAX_RESET_ENGINE,
+  fromFormValues as taxResetFromFormValues,
+} from '@/lib/calc/tax-reset';
+import {
   RENTAL_CASHFLOW_ENGINE,
   fromFormValues as rentalFromFormValues,
 } from '@/lib/calc/rental-cashflow';
@@ -141,6 +145,29 @@ describe('FieldSpec parity — every registered engine (5e)', () => {
     for (const field of CONDO_ASSESSMENT_ENGINE.fields) {
       expect(field.default, field.key).toBeUndefined();
       expect(field.defaultFromAssumption, field.key).toBeUndefined();
+    }
+  });
+
+  it('tax-reset consults only the growth cap; millage/exemptions never default (5h)', () => {
+    const result = TAX_RESET_ENGINE.compute(
+      taxResetFromFormValues({
+        currentAssessedValue: 150_000,
+        currentExemptions: 50_000,
+        purchasePrice: 650_000,
+        millageRate: 19.8,
+        buyerExemptions: 50_000,
+        purchaseYear: 2026,
+      }),
+      ASSUMPTIONS
+    );
+    expect(result.assumptionKeysUsed).toEqual(['saveOurHomesCapPct']);
+    expect(ASSUMPTIONS.saveOurHomesCapPct).toBeDefined();
+    for (const field of TAX_RESET_ENGINE.fields) {
+      if (['millageRate', 'currentExemptions', 'buyerExemptions'].includes(field.key)) {
+        expect(field.default, field.key).toBeUndefined();
+        expect(field.defaultFromAssumption, field.key).toBeUndefined();
+        expect(field.required, field.key).toBe(true);
+      }
     }
   });
 

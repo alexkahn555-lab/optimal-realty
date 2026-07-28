@@ -87,12 +87,14 @@ describe('leadSubmissionSchema', () => {
       leadSubmissionSchema.safeParse({ ...BASE, sourceSlug: 'anything' })
         .success
     ).toBe(false);
-    // Valid CalcId, but the tool is not published until Phase 5.
+    // Valid CalcId, but the tool is not published: homestead portability is
+    // deferred out of Phase 5 entirely (the pre-5h fixture was 'tax-reset',
+    // which 5h published).
     expect(
       leadSubmissionSchema.safeParse({
         ...BASE,
         sourceType: 'tool',
-        sourceSlug: 'tax-reset',
+        sourceSlug: 'homestead-portability',
       }).success
     ).toBe(false);
     expect(

@@ -241,6 +241,29 @@ export const UI = {
       es: 'Tasa de interés de la cuota especial (según divulgación)',
     },
     monthlyDues: { en: 'Monthly dues', es: 'Cuota mensual' },
+    // Property tax reset (5h) — TRIM-notice figures, never defaults.
+    currentAssessedValue: {
+      en: 'Current assessed value',
+      es: 'Valor catastral actual',
+    },
+    currentExemptions: {
+      en: "Current owner's exemptions",
+      es: 'Exenciones del propietario actual',
+    },
+    millageRate: { en: 'Millage rate (mills)', es: 'Tasa de millaje (milésimas)' },
+    buyerIntendsHomestead: {
+      en: 'Buyer will claim the homestead exemption',
+      es: 'El comprador reclamará la exención homestead',
+    },
+    buyerExemptions: {
+      en: "Buyer's exemptions (if claimed)",
+      es: 'Exenciones del comprador (si las reclama)',
+    },
+    purchaseYear: { en: 'Purchase year', es: 'Año de compra' },
+    projectionYears: {
+      en: 'Projection horizon (years)',
+      es: 'Horizonte de proyección (años)',
+    },
   },
 
   /* ---- Calculator enum value labels ---------------------------------------- */
@@ -300,6 +323,15 @@ export const UI = {
     assessmentTotal: {
       en: 'Only if the association has levied or proposed one.',
       es: 'Solo si la asociación la ha aprobado o propuesto.',
+    },
+    // Property tax reset (5h)
+    trimNotice: {
+      en: "From the county TRIM notice for this parcel — no default is offered.",
+      es: 'Del aviso TRIM del condado para esta parcela — no se ofrece valor predeterminado.',
+    },
+    buyerExemptions: {
+      en: 'Enter 0 if no exemption will be claimed.',
+      es: 'Ingrese 0 si no se reclamará ninguna exención.',
     },
   },
 
@@ -403,6 +435,19 @@ export const UI = {
       en: 'Unit assessment total (with disclosed interest)',
       es: 'Total de la cuota especial de la unidad (con interés divulgado)',
     },
+    // Property tax reset (5h)
+    currentAnnualTax: {
+      en: "Current owner's annual tax",
+      es: 'Impuesto anual del propietario actual',
+    },
+    newAnnualTax: {
+      en: "New owner's annual tax",
+      es: 'Impuesto anual del nuevo propietario',
+    },
+    taxDifference: {
+      en: 'Estimated annual tax difference',
+      es: 'Diferencia anual estimada del impuesto',
+    },
   },
 
   /* ---- Calculator shell / result panel chrome ------------------------------ */
@@ -413,6 +458,14 @@ export const UI = {
     oneTimeHeading: { en: 'One-time costs', es: 'Costos únicos' },
     monthlyHeading: { en: 'Monthly', es: 'Mensual' },
     daysUnit: { en: 'days', es: 'días' },
+    // Property tax reset (5h) — the projection table chrome.
+    projectionHeading: {
+      en: 'Projection under the assessment growth limitation',
+      es: 'Proyección bajo la limitación de crecimiento del avalúo',
+    },
+    projectionYearCol: { en: 'Tax year', es: 'Año fiscal' },
+    projectionAssessedCol: { en: 'Assessed value', es: 'Valor catastral' },
+    projectionTaxCol: { en: 'Annual tax', es: 'Impuesto anual' },
     emailBreakdown: {
       en: 'Email me this breakdown',
       es: 'Envíenme este desglose por correo',
