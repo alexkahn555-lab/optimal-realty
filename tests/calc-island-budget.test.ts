@@ -89,4 +89,27 @@ describe('phase 3 byte budgets', () => {
     );
     expect(gzipped).toBeLessThanOrEqual(2 * 1024);
   });
+
+  it('the rental-cashflow engine alone is at most 3 KB gzipped (5f)', async () => {
+    const result = await build({
+      entryPoints: [join(ROOT, 'lib/calc/rental-cashflow.ts')],
+      bundle: true,
+      minify: true,
+      write: false,
+      format: 'esm',
+      external: ['react', 'react-dom', 'react/jsx-runtime', 'next'],
+      define: { 'process.env.NODE_ENV': '"production"' },
+      plugins: [uiStringsExternal, atAlias],
+      logLevel: 'silent',
+    });
+
+    const output = result.outputFiles[0];
+    expect(output).toBeDefined();
+    const gzipped = gzipSync(output!.contents).byteLength;
+    // Surfaced in the completion report.
+    console.info(
+      `[budget] rental-cashflow engine: ${output!.contents.byteLength} B raw, ${gzipped} B gzipped`
+    );
+    expect(gzipped).toBeLessThanOrEqual(3 * 1024);
+  });
 });

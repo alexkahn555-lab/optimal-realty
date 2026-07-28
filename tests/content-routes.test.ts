@@ -19,6 +19,7 @@ import { HOME_VALUATION_SUBPAGE } from '@/content/subpages/home-valuation';
 import { PROPERTY_MANAGEMENT_SUBPAGE } from '@/content/subpages/property-management';
 import { SELLING_PROCESS_SUBPAGE } from '@/content/subpages/selling-process';
 import { NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
+import { RENTAL_CASHFLOW_TOOL } from '@/content/tools/rental-cash-flow';
 import { VACANCY_COST_TOOL } from '@/content/tools/vacancy-cost';
 import { AnswerBlock } from '@/components/seo';
 import { href } from '@/lib/seo/href';
@@ -119,7 +120,21 @@ describe('content ↔ href registry consistency', () => {
     expect(publishedTools().map((t) => t.id)).toEqual([
       'net-proceeds',
       'vacancy-cost',
+      'rental-cashflow',
     ]);
+  });
+
+  it('the rental-cashflow tool slug matches TOOL_SLUG (5f route map)', () => {
+    expect(href('tool.rental-cashflow', 'en')).toBe(
+      `/en/tools/${RENTAL_CASHFLOW_TOOL.slug.en}`
+    );
+    expect(href('tool.rental-cashflow', 'es')).toBe(
+      `/es/herramientas/${RENTAL_CASHFLOW_TOOL.slug.es}`
+    );
+    expect(RENTAL_CASHFLOW_TOOL.slug.en).toBe('rental-cash-flow');
+    expect(RENTAL_CASHFLOW_TOOL.slug.es).toBe('flujo-de-caja');
+    expect(RENTAL_CASHFLOW_TOOL.engineId).toBe('rental-cashflow');
+    expect(RENTAL_CASHFLOW_TOOL.portalIds).toEqual(['investors']);
   });
 
   it('the vacancy-cost tool slug matches TOOL_SLUG (5e route map)', () => {
@@ -344,14 +359,38 @@ describe('mode-sensitive tool publish gate (5e)', () => {
     expect(publishedTools().map((t) => t.id)).toContain('vacancy-cost');
   });
 
-  it('strict mode: the TK tool unpublishes; net-proceeds stays', () => {
+  it('strict mode: the TK tools unpublish; net-proceeds stays', () => {
     process.env.CONTENT_STRICT = '1';
     expect(publishedTools().map((t) => t.id)).toEqual(['net-proceeds']);
   });
 
-  it('portalLabel degrades the unfilled tool title to the structural slug', () => {
+  it('portalLabel degrades the unfilled tool titles to the structural slugs', () => {
     expect(portalLabel(VACANCY_COST_TOOL)).toEqual(VACANCY_COST_TOOL.slug);
+    expect(portalLabel(RENTAL_CASHFLOW_TOOL)).toEqual(RENTAL_CASHFLOW_TOOL.slug);
     expect(portalLabel(NET_PROCEEDS_TOOL)).toEqual(NET_PROCEEDS_TOOL.title);
+  });
+
+  it('the rental tool carries TK prose everywhere; metaFor falls to the site name (5f)', () => {
+    for (const locale of ['en', 'es'] as const) {
+      expect(RENTAL_CASHFLOW_TOOL.title[locale]).toMatch(/^TK_/);
+      expect(RENTAL_CASHFLOW_TOOL.answer.question[locale]).toMatch(/^TK_/);
+      expect(RENTAL_CASHFLOW_TOOL.answer.answer[locale]).toMatch(/^TK_/);
+      expect(RENTAL_CASHFLOW_TOOL.methodNote[locale]).toMatch(/^TK_/);
+      expect(RENTAL_CASHFLOW_TOOL.disclaimer[locale]).toMatch(/^TK_/);
+      const meta = metaFor(
+        {
+          id: 'tool.rental-cashflow',
+          title: RENTAL_CASHFLOW_TOOL.title,
+          description: RENTAL_CASHFLOW_TOOL.answer.answer,
+        },
+        locale
+      );
+      expect(meta.title).toBeUndefined();
+      expect(meta.description).toBe('Optimal Realty');
+      expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
+    }
+    expect(RENTAL_CASHFLOW_TOOL.faqIds).toEqual([]);
+    expect(RENTAL_CASHFLOW_TOOL.leadCapture.enabled).toBe(true);
   });
 
   it('metaFor for the tool falls to the site name — never a marker', () => {

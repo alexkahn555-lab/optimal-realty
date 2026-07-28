@@ -10,6 +10,7 @@ import {
 import { BUYERS_PORTAL } from '@/content/portals/buyers';
 import { SELLERS_PORTAL } from '@/content/portals/sellers';
 import { FIRST_TIME_BUYER_PROGRAMS_SUBPAGE } from '@/content/subpages/first-time-buyer-programs';
+import { RENTAL_CASHFLOW_TOOL } from '@/content/tools/rental-cash-flow';
 import { VACANCY_COST_TOOL } from '@/content/tools/vacancy-cost';
 
 describe('entityGraph()', () => {
@@ -130,20 +131,25 @@ describe('webApplicationNode from a TK-title tool (5e)', () => {
   });
 
   it('strips name/description; keeps FinanceApplication, Web, price 0, provider', () => {
-    for (const locale of ['en', 'es'] as const) {
-      const url = `https://example.com/${locale}/tools/vacancy-cost`;
-      const graph = pageGraph([webApplicationNode(VACANCY_COST_TOOL, url, locale)]);
-      const serialized = JSON.stringify(graph);
-      expect(serialized).not.toMatch(/\bTK_/);
-      const app = graph['@graph'][0] as Record<string, unknown>;
-      expect(app['@type']).toBe('WebApplication');
-      expect(app.name).toBeUndefined();
-      expect(app.description).toBeUndefined();
-      expect(app.applicationCategory).toBe('FinanceApplication');
-      expect(app.operatingSystem).toBe('Web');
-      expect((app.offers as Record<string, unknown>).price).toBe('0');
-      expect((app.provider as Record<string, string>)['@id']).toContain('#agent');
-      expect(serialized).not.toContain('"@type":"RealEstateAgent"');
+    // 5f: the same contract holds for every TK-title tool shipped so far.
+    for (const tool of [VACANCY_COST_TOOL, RENTAL_CASHFLOW_TOOL]) {
+      for (const locale of ['en', 'es'] as const) {
+        const url = `https://example.com/${locale}/tools/${tool.slug[locale]}`;
+        const graph = pageGraph([webApplicationNode(tool, url, locale)]);
+        const serialized = JSON.stringify(graph);
+        expect(serialized).not.toMatch(/\bTK_/);
+        const app = graph['@graph'][0] as Record<string, unknown>;
+        expect(app['@type']).toBe('WebApplication');
+        expect(app.name).toBeUndefined();
+        expect(app.description).toBeUndefined();
+        expect(app.applicationCategory).toBe('FinanceApplication');
+        expect(app.operatingSystem).toBe('Web');
+        expect((app.offers as Record<string, unknown>).price).toBe('0');
+        expect((app.provider as Record<string, string>)['@id']).toContain(
+          '#agent'
+        );
+        expect(serialized).not.toContain('"@type":"RealEstateAgent"');
+      }
     }
   });
 });

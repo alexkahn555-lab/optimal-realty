@@ -49,7 +49,7 @@ export const INVESTORS_PORTAL: Portal = {
       detail: { en: 'TK_PORTAL_INVESTORS_STEP_4_DETAIL', es: 'TK_PORTAL_INVESTORS_STEP_4_DETAIL' },
     },
   ],
-  toolIds: [], // investor calculators do not exist yet — 5d+ wires the rack
+  toolIds: ['rental-cashflow'], // 5f — the first investor calculator
   subpageIds: ['investors-1031-exchange'],
   adviceIds: [], // client counsel never blocks a route — AdviceList renders null
   faqIds: [],

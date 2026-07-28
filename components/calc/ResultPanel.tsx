@@ -12,7 +12,15 @@ import type {
   Localized,
 } from '@/lib/types';
 
-import { DAY_VALUED_KEYS, formatCents, formatDayHundredths } from './labels';
+import {
+  DAY_VALUED_KEYS,
+  PERCENT_BPS_KEYS,
+  RATIO_HUNDREDTH_KEYS,
+  formatCents,
+  formatDayHundredths,
+  formatPercentBps,
+  formatRatioHundredths,
+} from './labels';
 
 /**
  * Result panel (Part 7.4): marine background, ONE large mono headline figure,
@@ -38,12 +46,28 @@ export interface ResultPanelProps {
   leadIntent: LeadIntent;
 }
 
-/** Day-valued lines format as days (labels.ts); everything else is USD. */
+/** Non-money keys format per their unit (labels.ts); everything else is USD. */
 function formatLineAmount(line: LedgerLine, locale: Locale): string {
-  return DAY_VALUED_KEYS.has(line.key)
-    ? formatDayHundredths(line.amountCents, locale)
-    : formatCents(line.amountCents, locale);
+  if (DAY_VALUED_KEYS.has(line.key)) {
+    return formatDayHundredths(line.amountCents, locale);
+  }
+  if (PERCENT_BPS_KEYS.has(line.key)) {
+    return formatPercentBps(line.amountCents, locale);
+  }
+  if (RATIO_HUNDREDTH_KEYS.has(line.key)) {
+    return formatRatioHundredths(line.amountCents, locale);
+  }
+  return formatCents(line.amountCents, locale);
 }
+
+/**
+ * Negative-headline label overrides, keyed by headline key (data, not a
+ * per-engine branch): net proceeds flips to "shortfall"; a headline absent
+ * here (annual cash flow) keeps its own label and simply reads negative.
+ */
+const NEGATIVE_HEADLINE_LABEL: Record<string, Localized> = {
+  netProceeds: UI.ledger.shortfall,
+};
 
 function Ledger({
   lines,
@@ -85,10 +109,13 @@ export function ResultPanel({
   // The headline label follows the headline KEY (5e: a second engine ships a
   // different headline); a key without a ledger label is an authoring bug
   // caught by the fieldspec parity tests, so netProceeds stays the fallback.
+  // Negative overrides are keyed data too (5f): only engines that DEFINE a
+  // negative reading swap labels; others state the negative amount plainly.
   const ledgerLabels = UI.ledger as Record<string, Localized>;
-  const headlineLabel = negative
-    ? UI.ledger.shortfall
-    : (ledgerLabels[result.headline.key] ?? UI.ledger.netProceeds);
+  const headlineLabel =
+    (negative ? NEGATIVE_HEADLINE_LABEL[result.headline.key] : undefined) ??
+    ledgerLabels[result.headline.key] ??
+    UI.ledger.netProceeds;
 
   const payload = {
     inputs: values,

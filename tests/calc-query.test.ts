@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseCalcState, serializeCalcState } from '@/components/calc/query';
 import { NET_PROCEEDS_ENGINE } from '@/lib/calc/net-proceeds';
+import { RENTAL_CASHFLOW_ENGINE } from '@/lib/calc/rental-cashflow';
 import { VACANCY_COST_ENGINE } from '@/lib/calc/vacancy-cost';
 import type { CalcFormValues } from '@/lib/calc/registry';
 
@@ -124,5 +125,53 @@ describe('calc query codec — vacancy-cost (5e)', () => {
     expect(parseCalcState(FIELDS_V, '?vacantDays=3651')).toEqual({}); // max 3650
     expect(parseCalcState(FIELDS_V, '?leaseMonths=121')).toEqual({}); // max 120
     expect(parseCalcState(FIELDS_V, '?vacantDays=7')).toEqual({ vacantDays: 7 });
+  });
+});
+
+/** 5f — the codec roundtrip on the third engine's FieldSpec. */
+describe('calc query codec — rental-cashflow (5f)', () => {
+  const FIELDS_R = RENTAL_CASHFLOW_ENGINE.fields;
+  const DEFAULTS_R: CalcFormValues = {
+    interestRatePct: 6.5,
+    hoaMonthly: 0,
+    vacancyRatePct: 5,
+    maintenancePct: 8,
+    managementPct: 10,
+    closingCosts: 0,
+  };
+
+  it('roundtrips non-default values and omits defaults', () => {
+    const values: CalcFormValues = {
+      ...DEFAULTS_R,
+      purchasePrice: 300_000,
+      monthlyRent: 3_000,
+      downPaymentPct: 20,
+      loanTermYears: 30,
+      annualTaxes: 4_800,
+      annualInsurance: 2_400,
+      vacancyRatePct: 7,
+    };
+    const query = serializeCalcState(FIELDS_R, values, DEFAULTS_R);
+    const params = new URLSearchParams(query);
+    expect(params.get('interestRatePct')).toBeNull(); // default omitted
+    expect(params.get('maintenancePct')).toBeNull();
+    expect(params.get('purchasePrice')).toBe('300000');
+    expect(params.get('vacancyRatePct')).toBe('7'); // edited default serializes
+    expect(parseCalcState(FIELDS_R, `?${query}`)).toEqual({
+      purchasePrice: 300_000,
+      monthlyRent: 3_000,
+      downPaymentPct: 20,
+      loanTermYears: 30,
+      annualTaxes: 4_800,
+      annualInsurance: 2_400,
+      vacancyRatePct: 7,
+    });
+  });
+
+  it('drops out-of-range rental params on parse', () => {
+    expect(parseCalcState(FIELDS_R, '?downPaymentPct=101')).toEqual({}); // max 100
+    expect(parseCalcState(FIELDS_R, '?interestRatePct=25.5')).toEqual({}); // max 25
+    expect(parseCalcState(FIELDS_R, '?loanTermYears=51')).toEqual({}); // max 50
+    expect(parseCalcState(FIELDS_R, '?purchasePrice=999')).toEqual({}); // min 1,000
   });
 });

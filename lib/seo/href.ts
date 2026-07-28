@@ -69,7 +69,9 @@ const TOOL_SLUG: Record<CalcId, LocalizedSeg> = {
   'tax-reset': { en: 'tax-reset', es: 'reajuste-de-impuestos' },
   'homestead-portability': { en: 'homestead-portability', es: 'portabilidad-de-homestead' },
   'condo-assessment': { en: 'condo-assessment', es: 'derrama-de-condominio' },
-  'rental-cashflow': { en: 'rental-cashflow', es: 'flujo-de-caja-de-alquiler' },
+  // Slugs per the 5f dispatch route map (row 19; supersede the Phase 1
+  // judgment slugs 'rental-cashflow' / 'flujo-de-caja-de-alquiler').
+  'rental-cashflow': { en: 'rental-cash-flow', es: 'flujo-de-caja' },
   'vacancy-cost': { en: 'vacancy-cost', es: 'costo-de-vacancia' },
 };
 

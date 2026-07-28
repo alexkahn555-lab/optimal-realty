@@ -6,15 +6,19 @@ import {
   fromFormValues,
 } from '@/lib/calc/net-proceeds';
 import {
+  RENTAL_CASHFLOW_ENGINE,
+  fromFormValues as rentalFromFormValues,
+} from '@/lib/calc/rental-cashflow';
+import {
   VACANCY_COST_ENGINE,
   fromFormValues as vacancyFromFormValues,
 } from '@/lib/calc/vacancy-cost';
 
 /**
  * Engine registry — the island resolves engineId → engine here, so the client
- * bundle contains exactly the engines that pages actually mount. One entry per
- * shipped engine: net-proceeds (Phase 3) and vacancy-cost (5e); the remaining
- * four are separate dispatches.
+ * bundle contains exactly the engines that pages actually mount. One entry
+ * per shipped engine: net-proceeds (Phase 3), vacancy-cost (5e),
+ * rental-cashflow (5f); the remaining three are separate dispatches.
  */
 
 export type CalcFormValues = Record<string, number | string | boolean>;
@@ -39,5 +43,10 @@ export const CALCS: Partial<Record<CalcId, RegisteredCalc>> = {
   'vacancy-cost': {
     engine: VACANCY_COST_ENGINE as unknown as CalcEngine<unknown, EngineResult>,
     toInput: vacancyFromFormValues,
+  },
+  // 5f — no clampCrossField: percent bands are absolute (0–100).
+  'rental-cashflow': {
+    engine: RENTAL_CASHFLOW_ENGINE as unknown as CalcEngine<unknown, EngineResult>,
+    toInput: rentalFromFormValues,
   },
 };

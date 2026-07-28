@@ -119,3 +119,116 @@ describe('day-valued secondary lines never read as money', () => {
     expect(markup).toContain('$460.27');
   });
 });
+
+/**
+ * 5f — the FIRST result with BOTH arrays genuinely populated (rental cash
+ * flow): the monthly picture (debt service included) and the one-time
+ * cash-to-close render as separate blocks, ratio lines render as percentages
+ * or plain ratios (never USD), and no figure combines a monthly line with a
+ * one-time line anywhere in the panel.
+ */
+describe('both arrays populated: debt service and cash-to-close never meet (5f)', () => {
+  const RENTAL_FIXTURE: EngineResult & {
+    secondaryLines?: import('@/lib/types').LedgerLine[];
+  } = {
+    monthlyLines: [
+      {
+        key: 'rent',
+        label: { en: 'Gross scheduled rent', es: 'Renta bruta programada' },
+        amountCents: 300_000,
+        basis: 'input',
+      },
+      {
+        key: 'debtService',
+        label: { en: 'Debt service', es: 'Servicio de la deuda' },
+        amountCents: 151_696,
+        basis: 'market-must-update',
+        flagged: true,
+      },
+    ],
+    oneTimeLines: [
+      {
+        key: 'downPayment',
+        label: { en: 'Down payment', es: 'Pago inicial' },
+        amountCents: 6_000_000,
+        basis: 'input',
+      },
+      {
+        key: 'closingCosts',
+        label: { en: 'Closing costs', es: 'Costos de cierre' },
+        amountCents: 600_000,
+        basis: 'input',
+      },
+    ],
+    headline: { key: 'annualCashFlow', amountCents: 231_648 },
+    assumptionKeysUsed: [],
+    secondaryLines: [
+      {
+        key: 'capRate',
+        label: { en: 'Cap rate', es: 'Tasa de capitalización' },
+        amountCents: 684,
+        basis: 'unconfirmed-default',
+        flagged: true,
+      },
+      {
+        key: 'dscr',
+        label: { en: 'Debt service coverage (DSCR)', es: 'DSCR' },
+        amountCents: 113,
+        basis: 'unconfirmed-default',
+        flagged: true,
+      },
+    ],
+  };
+
+  const markup = renderToStaticMarkup(
+    <ResultPanel
+      result={RENTAL_FIXTURE}
+      locale="en"
+      values={{}}
+      sourceSlug="rental-cashflow"
+      leadIntent="invest"
+    />
+  );
+
+  it('both blocks render under their own headings with their own lines', () => {
+    expect(markup).toContain('Monthly');
+    expect(markup).toContain('One-time costs');
+    expect(markup).toContain('$1,516.96'); // debt service — monthly block
+    expect(markup).toContain('$60,000.00'); // down payment — one-time block
+    expect(markup).toContain('$6,000.00'); // closing costs — one-time block
+  });
+
+  it('no combined total across the arrays appears anywhere', () => {
+    // monthly sum 451,696 + one-time sum 6,600,000 = 7,051,696 → forbidden.
+    expect(markup).not.toContain('$70,516.96');
+    // debt service + down payment = 6,151,696 → forbidden.
+    expect(markup).not.toContain('$61,516.96');
+    // headline + cash-to-close = 6,831,648 → forbidden.
+    expect(markup).not.toContain('$68,316.48');
+  });
+
+  it('ratio lines render as percent / plain ratio, never USD', () => {
+    expect(markup).toContain('6.84%');
+    expect(markup).toContain('1.13');
+    expect(markup).not.toContain('$6.84');
+    expect(markup).not.toContain('$1.13');
+  });
+
+  it('a negative annual cash flow keeps its own label — no shortfall swap', () => {
+    const negative = renderToStaticMarkup(
+      <ResultPanel
+        result={{
+          ...RENTAL_FIXTURE,
+          headline: { key: 'annualCashFlow', amountCents: -230_352 },
+        }}
+        locale="en"
+        values={{}}
+        sourceSlug="rental-cashflow"
+        leadIntent="invest"
+      />
+    );
+    expect(negative).toContain('Estimated annual cash flow');
+    expect(negative).not.toContain('shortfall at closing');
+    expect(negative).toContain('-$2,303.52'); // stated plainly, never clamped
+  });
+});

@@ -70,6 +70,14 @@ describe('href()', () => {
     );
   });
 
+  it('the rental-cash-flow tool round-trips both locales (5f route map)', () => {
+    // Slugs per route map row 19 (supersede the Phase 1 judgment slugs).
+    expect(href('tool.rental-cashflow', 'en')).toBe('/en/tools/rental-cash-flow');
+    expect(href('tool.rental-cashflow', 'es')).toBe(
+      '/es/herramientas/flujo-de-caja'
+    );
+  });
+
   it('portal subpage routes (Phase 3)', () => {
     expect(href('subpage.sellers-home-valuation', 'en')).toBe(
       '/en/sellers/home-valuation'

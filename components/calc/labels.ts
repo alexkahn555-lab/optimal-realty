@@ -24,11 +24,15 @@ export function formatCents(cents: number, locale: string): string {
 }
 
 /**
- * Days-valued output lines (5e): their `amountCents` holds integer HUNDREDTHS
- * OF A DAY, never money — formatting them as USD would misstate a day count
- * as a price. Keyed here so the ResultPanel stays engine-agnostic.
+ * NON-MONEY output lines (5e days, 5f ratios): their `amountCents` holds a
+ * NON-CURRENCY integer quantity — hundredths of a day, basis points of a
+ * percentage, or hundredths of a ratio. Formatting them as USD would misstate
+ * a count or a rate as a price. Keyed here so the ResultPanel stays
+ * engine-agnostic: any key absent from these sets formats as cents.
  */
 export const DAY_VALUED_KEYS = new Set(['maxExtraVacantDays']);
+export const PERCENT_BPS_KEYS = new Set(['capRate', 'cashOnCash']);
+export const RATIO_HUNDREDTH_KEYS = new Set(['dscr']);
 
 /** Integer hundredths of a day → localized "9.13 days" / "9.13 días". */
 export function formatDayHundredths(hundredths: number, locale: Locale): string {
@@ -36,6 +40,22 @@ export function formatDayHundredths(hundredths: number, locale: Locale): string 
     maximumFractionDigits: 2,
   }).format(hundredths / 100);
   return `${number} ${t(UI.calc.daysUnit, locale)}`;
+}
+
+/** Integer basis points → localized percentage: 684 → "6.84%". */
+export function formatPercentBps(bps: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'percent',
+    maximumFractionDigits: 2,
+  }).format(bps / 10_000);
+}
+
+/** Integer hundredths of a ratio → plain localized decimal: 113 → "1.13". */
+export function formatRatioHundredths(hundredths: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(hundredths / 100);
 }
 
 /** Enum field values → their chrome labels (labels are chrome, not content). */

@@ -204,6 +204,17 @@ export const UI = {
       es: 'Aumento de renta propuesto (mensual)',
     },
     leaseMonths: { en: 'Lease term (months)', es: 'Plazo del contrato (meses)' },
+    // Rental cash flow (5f)
+    purchasePrice: { en: 'Purchase price', es: 'Precio de compra' },
+    downPaymentPct: { en: 'Down payment', es: 'Pago inicial' },
+    interestRatePct: { en: 'Interest rate', es: 'Tasa de interés' },
+    loanTermYears: { en: 'Loan term (years)', es: 'Plazo del préstamo (años)' },
+    annualTaxes: { en: 'Annual property taxes', es: 'Impuesto predial anual' },
+    annualInsurance: { en: 'Annual insurance', es: 'Seguro anual' },
+    vacancyRatePct: { en: 'Vacancy rate', es: 'Tasa de vacancia' },
+    maintenancePct: { en: 'Maintenance reserve', es: 'Reserva de mantenimiento' },
+    managementPct: { en: 'Management fee', es: 'Cuota de administración' },
+    closingCosts: { en: 'Closing costs', es: 'Costos de cierre' },
   },
 
   /* ---- Calculator enum value labels ---------------------------------------- */
@@ -244,6 +255,11 @@ export const UI = {
     proposedRentIncrease: {
       en: 'Enables the extra-vacant-days trade-off line.',
       es: 'Habilita la línea de días adicionales de vacancia.',
+    },
+    // Rental cash flow (5f) — insurance deliberately has NO default (Part 6.1).
+    annualInsurance: {
+      en: 'No default — Florida premiums vary widely. Use your quote.',
+      es: 'Sin valor predeterminado — las primas en Florida varían mucho. Use su cotización.',
     },
   },
 
@@ -299,6 +315,31 @@ export const UI = {
     maxExtraVacantDays: {
       en: 'Extra vacant days the increase could pay for',
       es: 'Días adicionales de vacancia que cubriría el aumento',
+    },
+    // Rental cash flow (5f)
+    rent: { en: 'Gross scheduled rent', es: 'Renta bruta programada' },
+    vacancyAllowance: { en: 'Vacancy allowance', es: 'Provisión por vacancia' },
+    propertyTaxes: { en: 'Property taxes', es: 'Impuesto predial' },
+    insurance: { en: 'Insurance', es: 'Seguro' },
+    hoa: { en: 'HOA dues', es: 'Cuota de la asociación' },
+    maintenance: { en: 'Maintenance reserve', es: 'Reserva de mantenimiento' },
+    management: { en: 'Property management', es: 'Administración de la propiedad' },
+    debtService: { en: 'Debt service', es: 'Servicio de la deuda' },
+    downPayment: { en: 'Down payment', es: 'Pago inicial' },
+    closingCosts: { en: 'Closing costs', es: 'Costos de cierre' },
+    noi: {
+      en: 'Net operating income (annual)',
+      es: 'Ingreso operativo neto (anual)',
+    },
+    capRate: { en: 'Cap rate', es: 'Tasa de capitalización' },
+    cashOnCash: { en: 'Cash-on-cash return', es: 'Retorno sobre efectivo' },
+    dscr: {
+      en: 'Debt service coverage (DSCR)',
+      es: 'Cobertura del servicio de la deuda (DSCR)',
+    },
+    annualCashFlow: {
+      en: 'Estimated annual cash flow',
+      es: 'Flujo de caja anual estimado',
     },
   },
 

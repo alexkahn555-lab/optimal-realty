@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { ASSUMPTIONS } from '@/config/assumptions';
 import { NET_PROCEEDS_ENGINE, fromFormValues } from '@/lib/calc/net-proceeds';
 import {
+  RENTAL_CASHFLOW_ENGINE,
+  fromFormValues as rentalFromFormValues,
+} from '@/lib/calc/rental-cashflow';
+import {
   VACANCY_COST_ENGINE,
   fromFormValues as vacancyFromFormValues,
 } from '@/lib/calc/vacancy-cost';
@@ -112,6 +116,27 @@ describe('FieldSpec parity — every registered engine (5e)', () => {
   it('vacancy-cost assumptionKeysUsed keys exist in the set', () => {
     const result = VACANCY_COST_ENGINE.compute(
       vacancyFromFormValues({ monthlyRent: 2_000 }),
+      ASSUMPTIONS
+    );
+    for (const key of result.assumptionKeysUsed) {
+      expect(ASSUMPTIONS[key], `assumption "${key}"`).toBeDefined();
+    }
+  });
+
+  it('rental-cashflow assumptionKeysUsed keys exist in the set (5f)', () => {
+    const result = RENTAL_CASHFLOW_ENGINE.compute(
+      rentalFromFormValues({
+        purchasePrice: 300_000,
+        monthlyRent: 3_000,
+        downPaymentPct: 20,
+        interestRatePct: 6.5,
+        loanTermYears: 30,
+        annualTaxes: 4_800,
+        annualInsurance: 2_400,
+        vacancyRatePct: 5,
+        maintenancePct: 8,
+        managementPct: 10,
+      }),
       ASSUMPTIONS
     );
     for (const key of result.assumptionKeysUsed) {

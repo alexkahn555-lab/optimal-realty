@@ -196,4 +196,27 @@ export const ASSUMPTIONS: AssumptionSet = {
     asOf: '2026-07-28',
     note: NOTE('Default lease term (months) for the rent-increase trade-off.'),
   },
+
+  /* ---- Rental cash flow (5f) — Part 6.4 flagged percentages -------------- */
+  vacancyRatePct: {
+    key: 'vacancyRatePct',
+    value: 5,
+    basis: 'unconfirmed-default',
+    asOf: '2026-07-28',
+    note: NOTE('Vacancy allowance as a share of gross scheduled income.'),
+  },
+  maintenancePct: {
+    key: 'maintenancePct',
+    value: 8,
+    basis: 'unconfirmed-default',
+    asOf: '2026-07-28',
+    note: NOTE('Maintenance reserve as a share of gross scheduled income.'),
+  },
+  managementPct: {
+    key: 'managementPct',
+    value: 10,
+    basis: 'unconfirmed-default',
+    asOf: '2026-07-28',
+    note: NOTE('Property management fee as a share of gross scheduled income.'),
+  },
 } as const;
