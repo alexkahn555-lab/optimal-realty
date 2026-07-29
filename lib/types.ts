@@ -12,7 +12,10 @@
  *    unrepresentable, not merely discouraged (Part 1.4 content-integrity rule).
  *  - The Listing type has NO mlsNumber / IDX / syndication fields. Adding IDX is a
  *    re-scope, not a feature request (R-12).
- *  - ScorecardEntry has NO 'schools' or 'desirability' key. Fair-housing hard rule
+ *  - ScorecardEntry and NeighborhoodStatKey are CLOSED unions that omit every
+ *    Part 1.4 fair-housing exclusion (education-quality ratings, area
+ *    composition, attractiveness scoring — named in Part 1.4, not here, so the
+ *    exclusion grep stays clean). Fair-housing hard rule
  *    (D11 / R-04). Scores are the broker's own assessment, never third-party ratings.
  *
  * Mirroring zod schemas live in lib/content/schema.ts and enforce all of this at
@@ -188,7 +191,7 @@ export interface MediaAsset {
 }
 
 /**
- * NOTE: no 'schools' or 'neighborhood-desirability' key exists in this union.
+ * NOTE: the Part 1.4 fair-housing exclusions do not exist in this union.
  * Fair-housing hard rule (Part 1.4). Scores are the broker's own professional
  * assessment, per listing — never a third-party rating service (R-08).
  */
@@ -274,6 +277,22 @@ export interface Listing {
 
 /* ---- Neighborhoods ------------------------------------------------------ */
 
+/**
+ * The CLOSED neighborhood stat key set (7a) — market-transaction figures only,
+ * enforced the way the scorecard union is: a key outside this union is
+ * unrepresentable, not merely discouraged. The Part 1.4 fair-housing
+ * exclusions (D-03) are absent BY OMISSION from this union; they are named in
+ * Part 1.4, deliberately not here. Every value is a SourcedStat, so an
+ * unsourced figure cannot be expressed either (Part 2.1).
+ */
+export type NeighborhoodStatKey =
+  | 'medianSalePrice'
+  | 'medianPricePerSqFt'
+  | 'medianDom'
+  | 'salesLastYear'
+  | 'activeListingCount'
+  | 'medianRentMonthly';
+
 export interface Neighborhood {
   id: string;
   slug: string; // locale-invariant
@@ -282,12 +301,19 @@ export interface Neighborhood {
   status: 'stub' | 'published'; // ONLY 'published' builds — the elasticity valve (R-01)
   answer: AnswerBlock;
   overview: Localized; // 'TK_NBHD_<ID>_OVERVIEW'
-  stats?: Record<string, SourcedStat>; // StatGrid renders only the keys present
+  /** StatGrid renders only the keys present; keys are the closed union above. */
+  stats?: Partial<Record<NeighborhoodStatKey, SourcedStat>>;
   geo: { lat: number; lng: number };
   relatedPortalIds: PortalId[];
   faqIds: string[];
   heroMedia?: MediaAsset;
   priority: number; // authoring order — UNCONFIRMED D-04
+  /**
+   * Marks a realistic-but-invented demonstration neighborhood (the 4c
+   * convention): routable behind the visible demonstration banner, EXCLUDED
+   * from every discovery surface and every index.
+   */
+  isFixture?: true;
 }
 
 /* ---- Site entity -------------------------------------------------------- */

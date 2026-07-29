@@ -2,6 +2,7 @@ import type {
   Listing,
   Locale,
   Localized,
+  Neighborhood,
   Portal,
   PortalSubpage,
   PropertyClass,
@@ -367,6 +368,36 @@ export function realEstateListingNode(
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
       offeredBy: { '@id': AGENT_ID },
+    },
+  };
+}
+
+/**
+ * Neighborhood page (7a, Part 4.2): Place with geo and containedInPlace
+ * pointing at Miami-Dade County. DELIBERATELY NOT Dataset — the stats are
+ * single sourced values, not a distributable dataset. Pairs with webPageNode
+ * and the Breadcrumbs-emitted BreadcrumbList; FAQPage only via the existing
+ * builder when FAQs exist. References nothing that redeclares the agent.
+ */
+export function placeNode(
+  neighborhood: Neighborhood,
+  url: string,
+  locale: Locale
+): Record<string, unknown> {
+  return {
+    '@type': 'Place',
+    '@id': `${url}#place`,
+    name: neighborhood.name[locale], // TK → stripped by pageGraph
+    url,
+    inLanguage: locale,
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: neighborhood.geo.lat,
+      longitude: neighborhood.geo.lng,
+    },
+    containedInPlace: {
+      '@type': 'AdministrativeArea',
+      name: 'Miami-Dade County',
     },
   };
 }

@@ -27,6 +27,8 @@ import {
   SELLING_PROCESS_FAQS,
   SELLING_PROCESS_SUBPAGE,
 } from '@/content/subpages/selling-process';
+import { FIXTURE_PALMS_NEIGHBORHOOD } from '@/content/neighborhoods/fixture-palms';
+import { PLACEHOLDER_GROVE_STUB_NEIGHBORHOOD } from '@/content/neighborhoods/placeholder-grove-stub';
 import { CONDO_ASSESSMENT_TOOL } from '@/content/tools/condo-assessment-exposure';
 import { NET_PROCEEDS_FAQS, NET_PROCEEDS_TOOL } from '@/content/tools/net-proceeds';
 import { TAX_RESET_TOOL } from '@/content/tools/property-tax-reset';
@@ -90,7 +92,12 @@ const LISTINGS: readonly Listing[] = [
   LISTING_L_2026_002,
   LISTING_L_2026_003,
 ];
-const NEIGHBORHOODS: readonly Neighborhood[] = [];
+// 7a: demonstration fixtures ONLY — one published (template proof), one stub
+// (gate proof). Real instances are client data (D-04), never registered here.
+const NEIGHBORHOODS: readonly Neighborhood[] = [
+  FIXTURE_PALMS_NEIGHBORHOOD,
+  PLACEHOLDER_GROVE_STUB_NEIGHBORHOOD,
+];
 
 /** Site-wide FAQ pool (ids are globally unique; enforced by test). */
 export const ALL_FAQS: readonly Faq[] = [
@@ -253,14 +260,15 @@ export function isSoldArchived(listing: Listing): boolean {
 }
 
 /**
- * Discovery predicate (dispatch 4c): fixtures stay ROUTABLE (their pages
- * exist for template review, behind a visible demonstration banner) but are
- * EXCLUDED from every discovery surface — sitemap, llms.txt, OG images. A
- * demonstration listing that search engines or answer engines can find reads
- * as a real property or transaction, which the content-integrity rules forbid.
+ * Discovery predicate (dispatch 4c; widened to any fixture-flagged entity in
+ * 7a): fixtures stay ROUTABLE (their pages exist for template review, behind
+ * a visible demonstration banner) but are EXCLUDED from every discovery
+ * surface — sitemap, llms.txt, OG images, indexes, rails. A demonstration
+ * entity that search engines or answer engines can find reads as a real
+ * place, property, or transaction, which the content-integrity rules forbid.
  */
-export function isDiscoverable(listing: Listing): boolean {
-  return listing.isFixture !== true;
+export function isDiscoverable(entity: { isFixture?: true }): boolean {
+  return entity.isFixture !== true;
 }
 
 /** Currently-marketed inventory: the active index, report routes, Offer nodes. */
@@ -293,11 +301,29 @@ export function resolvedFaqs(
     .map(({ question, answer }) => ({ question, answer }));
 }
 
+/**
+ * The R-01 elasticity valve: ONLY 'published' exists as a route — a stub is
+ * not a draft that renders empty, it does not exist anywhere (no params, no
+ * sitemap, no llms.txt, no index, no link). The name joins the 5c/5d/5e
+ * title mode split (report publishes an unfilled name behind
+ * neighborhoodLabel; strict unpublishes).
+ */
 export function publishedNeighborhoods(): Neighborhood[] {
   return NEIGHBORHOODS.filter(
     (n) =>
       n.status === 'published' &&
-      localizedClean(n.name) &&
+      titleClean(n.name) &&
       answerClean(n.answer)
   );
+}
+
+/**
+ * Display label wherever a neighborhood name renders as chrome (crumbs,
+ * index rows, links): the name when filled, else the structural
+ * locale-invariant slug — never a raw marker, never agent-authored prose.
+ */
+export function neighborhoodLabel(neighborhood: Neighborhood): Localized {
+  return localizedClean(neighborhood.name)
+    ? neighborhood.name
+    : { en: neighborhood.slug, es: neighborhood.slug };
 }

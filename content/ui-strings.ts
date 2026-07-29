@@ -47,6 +47,72 @@ export const UI = {
     close: { en: 'Close', es: 'Cerrar' },
   },
 
+  /* ---- Neighborhoods (7a) — index chrome + stat furniture ------------------ */
+  neighborhoods: {
+    // Index AnswerBlock — factual chrome about what this section IS (the
+    // tools-hub precedent); guide prose itself is client counsel and stays TK
+    // in the entities.
+    question: {
+      en: 'Which Miami-Dade neighborhoods does Optimal Realty cover?',
+      es: '¿Qué vecindarios de Miami-Dade cubre Optimal Realty?',
+    },
+    answer: {
+      en:
+        'Neighborhood guides are published here as they are completed, each ' +
+        'with a broker-reviewed overview and sourced market figures dated to ' +
+        'their verification.',
+      es:
+        'Las guías de vecindarios se publican aquí a medida que se completan, ' +
+        'cada una con una reseña revisada por el corredor y cifras de mercado ' +
+        'con fuente y fecha de verificación.',
+    },
+    empty: {
+      en: 'No neighborhood guides are published yet.',
+      es: 'Aún no hay guías de vecindarios publicadas.',
+    },
+  },
+
+  /** Stat labels — the closed NeighborhoodStatKey union, chrome only. */
+  neighborhoodStats: {
+    medianSalePrice: { en: 'Median sale price', es: 'Precio de venta mediano' },
+    medianPricePerSqFt: {
+      en: 'Median price per square foot',
+      es: 'Precio mediano por pie cuadrado',
+    },
+    medianDom: { en: 'Median days on market', es: 'Días medianos en el mercado' },
+    salesLastYear: {
+      en: 'Sales in the last 12 months',
+      es: 'Ventas en los últimos 12 meses',
+    },
+    activeListingCount: { en: 'Active listings', es: 'Propiedades activas' },
+    medianRentMonthly: {
+      en: 'Median monthly rent',
+      es: 'Renta mensual mediana',
+    },
+  },
+
+  /** Stat source furniture (Part 1.3 — typographic, not a disclaimer). */
+  statFurniture: {
+    sourceLabel: { en: 'Source', es: 'Fuente' },
+    asOfLabel: { en: 'as of', es: 'al' },
+    daysUnit: { en: 'days', es: 'días' },
+    perSqFt: { en: '/ sq ft', es: '/ pie²' },
+    perMonth: { en: '/ month', es: '/ mes' },
+  },
+
+  /* ---- Demonstration banner (generic — the 4c truth label) ----------------- */
+  fixtureBanner: {
+    tag: { en: 'Demonstration page', es: 'Página de demostración' },
+    body: {
+      en:
+        'This page shows placeholder data to preview the site template. It ' +
+        'does not describe a real place, property, or market.',
+      es:
+        'Esta página muestra datos de relleno para previsualizar la plantilla ' +
+        'del sitio. No describe un lugar, propiedad ni mercado real.',
+    },
+  },
+
   /* ---- Portal entry labels (chrome) --------------------------------------- */
   // Moved verbatim from the home view (5d) so labels and slugs derive from
   // the same PortalId registry and cannot drift again. These are interim

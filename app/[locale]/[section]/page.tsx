@@ -5,7 +5,13 @@ import { SITE_ORIGIN } from '@/config/origin';
 import { ABOUT_ANSWER } from '@/content/about';
 import { UI } from '@/content/ui-strings';
 import { isLocale, t } from '@/lib/i18n';
-import { publishedPortals, publishedTools } from '@/lib/content/loaders';
+import {
+  isDiscoverable,
+  neighborhoodLabel,
+  publishedNeighborhoods,
+  publishedPortals,
+  publishedTools,
+} from '@/lib/content/loaders';
 import { LISTING_UI } from '@/components/listing/strings';
 import { href } from '@/lib/seo/href';
 import { collectionPageNode, pageGraph, profilePageNodes } from '@/lib/seo/jsonld';
@@ -39,13 +45,15 @@ const LOCALES: readonly Locale[] = ['en', 'es'];
 
 /** Answer freshness date — bump when the answer copy changes. */
 const TOOLS_HUB_UPDATED = '2026-07-26' as const;
+const NEIGHBORHOODS_INDEX_UPDATED = '2026-07-28' as const;
 
 type SectionMatch =
   | { kind: 'contact' }
   | { kind: 'portal'; portal: Portal }
   | { kind: 'tools' }
   | { kind: 'about' }
-  | { kind: 'listings' };
+  | { kind: 'listings' }
+  | { kind: 'neighborhoods' };
 
 /** Registry-driven resolution: the URL either IS a registered route or 404s. */
 function resolveSection(locale: Locale, section: string): SectionMatch | null {
@@ -54,6 +62,7 @@ function resolveSection(locale: Locale, section: string): SectionMatch | null {
   if (pathname === href('tools', locale)) return { kind: 'tools' };
   if (pathname === href('about', locale)) return { kind: 'about' };
   if (pathname === href('listings', locale)) return { kind: 'listings' };
+  if (pathname === href('neighborhoods', locale)) return { kind: 'neighborhoods' };
   for (const portal of publishedPortals()) {
     if (pathname === href(`portal.${portal.id}`, locale)) {
       return { kind: 'portal', portal };
@@ -76,6 +85,7 @@ export function generateStaticParams(): { locale: Locale; section: string }[] {
     { locale, section: lastSegment(href('tools', locale)) },
     { locale, section: lastSegment(href('about', locale)) },
     { locale, section: lastSegment(href('listings', locale)) },
+    { locale, section: lastSegment(href('neighborhoods', locale)) },
     ...publishedPortals().map((portal) => ({
       locale,
       section: lastSegment(href(`portal.${portal.id}`, locale)),
@@ -123,6 +133,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         { id: 'listings', title: UI.nav.listings, description: LISTING_UI.index.intro },
         locale
       );
+    case 'neighborhoods':
+      return metaFor(
+        {
+          id: 'neighborhoods',
+          title: UI.nav.neighborhoods,
+          description: UI.neighborhoods.answer,
+        },
+        locale
+      );
   }
 }
 
@@ -165,6 +184,64 @@ function ToolsHubView({ locale }: { locale: Locale }): JSX.Element {
   );
 }
 
+/**
+ * NEIGHBORHOODS INDEX (7a) — zero-JS, published NON-FIXTURE guides only,
+ * ordered by the priority field (R-01: a stub or fixture never appears in
+ * any index). With only fixtures registered it renders its empty state.
+ */
+function NeighborhoodsIndexView({ locale }: { locale: Locale }): JSX.Element {
+  const url = `${SITE_ORIGIN}${href('neighborhoods', locale)}`;
+  const guides = publishedNeighborhoods()
+    .filter(isDiscoverable)
+    .sort((a, b) => a.priority - b.priority);
+
+  return (
+    <Section className="py-16 md:py-24">
+      <div className="space-y-12">
+        <Breadcrumbs
+          items={[
+            { id: 'home', label: UI.breadcrumb.home },
+            { id: 'neighborhoods', label: UI.nav.neighborhoods },
+          ]}
+          locale={locale}
+        />
+        <Heading level={1}>{t(UI.neighborhoods.question, locale)}</Heading>
+        <AnswerBlock
+          block={{
+            question: UI.neighborhoods.question,
+            answer: UI.neighborhoods.answer,
+            updated: NEIGHBORHOODS_INDEX_UPDATED,
+          }}
+          locale={locale}
+        />
+        {guides.length === 0 ? (
+          <p className="font-sans text-ink">
+            {t(UI.neighborhoods.empty, locale)}
+          </p>
+        ) : (
+          <ul>
+            {guides.map((guide) => (
+              <li key={guide.id} className="border-b border-hair">
+                <a
+                  className="block py-5 font-display text-2xl text-ink"
+                  href={href(`neighborhood.${guide.slug}`, locale)}
+                >
+                  {t(neighborhoodLabel(guide), locale)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <JsonLd
+        graph={pageGraph([
+          collectionPageNode(UI.nav.neighborhoods, UI.neighborhoods.answer, url, locale),
+        ])}
+      />
+    </Section>
+  );
+}
+
 function AboutView({ locale }: { locale: Locale }): JSX.Element {
   const url = `${SITE_ORIGIN}${href('about', locale)}`;
 
@@ -201,5 +278,7 @@ export default async function SectionPage({ params }: PageProps): Promise<JSX.El
       const { ListingsIndexView } = await import('./listings-index-view');
       return <ListingsIndexView locale={locale} />;
     }
+    case 'neighborhoods':
+      return <NeighborhoodsIndexView locale={locale} />;
   }
 }

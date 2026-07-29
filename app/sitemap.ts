@@ -36,9 +36,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...soldListings()
       .filter(isDiscoverable)
       .map((l) => `listing.${l.slug}` as RouteId),
-    ...publishedNeighborhoods().map(
-      (n) => `neighborhood.${n.slug}` as RouteId,
-    ),
+    // 7a: the index is a real published route; entity pages follow the same
+    // 4c discovery contract as listings — fixtures never enter the sitemap.
+    'neighborhoods',
+    ...publishedNeighborhoods()
+      .filter(isDiscoverable)
+      .map((n) => `neighborhood.${n.slug}` as RouteId),
   ];
   const abs = (id: RouteId, locale: Locale) =>
     `${SITE_ORIGIN}${href(id, locale)}`;

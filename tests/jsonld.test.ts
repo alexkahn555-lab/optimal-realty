@@ -3,10 +3,12 @@ import {
   articleNode,
   entityGraph,
   pageGraph,
+  placeNode,
   serviceNode,
   webApplicationNode,
   webPageNode,
 } from '@/lib/seo/jsonld';
+import { FIXTURE_PALMS_NEIGHBORHOOD } from '@/content/neighborhoods/fixture-palms';
 import { BUYERS_PORTAL } from '@/content/portals/buyers';
 import { SELLERS_PORTAL } from '@/content/portals/sellers';
 import { FIRST_TIME_BUYER_PROGRAMS_SUBPAGE } from '@/content/subpages/first-time-buyer-programs';
@@ -157,6 +159,35 @@ describe('webApplicationNode from a TK-title tool (5e)', () => {
         );
         expect(serialized).not.toContain('"@type":"RealEstateAgent"');
       }
+    }
+  });
+});
+
+/**
+ * Dispatch 7a — the neighborhood Place node (Part 4.2): geo and
+ * containedInPlace survive, the TK name strips away, and the type is Place —
+ * deliberately never Dataset (the stats are single sourced values).
+ */
+describe('placeNode from the TK-named fixture (7a)', () => {
+  it('strips the name; keeps geo + containedInPlace; is never a Dataset', () => {
+    for (const locale of ['en', 'es'] as const) {
+      const url = `https://example.com/${locale}/neighborhoods/fixture-palms-example`;
+      const graph = pageGraph([
+        placeNode(FIXTURE_PALMS_NEIGHBORHOOD, url, locale),
+      ]);
+      const serialized = JSON.stringify(graph);
+      expect(serialized).not.toMatch(/\bTK_/);
+      const place = graph['@graph'][0] as Record<string, unknown>;
+      expect(place['@type']).toBe('Place');
+      expect(place.name).toBeUndefined();
+      const geo = place.geo as Record<string, unknown>;
+      expect(geo['@type']).toBe('GeoCoordinates');
+      expect(geo.latitude).toBe(25.75);
+      expect(
+        (place.containedInPlace as Record<string, unknown>).name
+      ).toBe('Miami-Dade County');
+      expect(serialized).not.toContain('"@type":"Dataset"');
+      expect(serialized).not.toContain('"@type":"RealEstateAgent"');
     }
   });
 });

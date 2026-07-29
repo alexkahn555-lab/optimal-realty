@@ -55,6 +55,17 @@ describe('href()', () => {
     expect(href('listings.sold', 'es')).toBe('/es/propiedades/vendidas');
   });
 
+  it('the neighborhoods index and detail round-trip both locales (7a)', () => {
+    expect(href('neighborhoods', 'en')).toBe('/en/neighborhoods');
+    expect(href('neighborhoods', 'es')).toBe('/es/vecindarios');
+    expect(href('neighborhood.fixture-palms-example', 'en')).toBe(
+      '/en/neighborhoods/fixture-palms-example'
+    );
+    expect(href('neighborhood.fixture-palms-example', 'es')).toBe(
+      '/es/vecindarios/fixture-palms-example'
+    );
+  });
+
   it('dynamic slug composition', () => {
     expect(href('listing.123-main-st', 'en')).toBe('/en/listings/123-main-st');
     expect(href('listing.123-main-st', 'es')).toBe('/es/propiedades/123-main-st');

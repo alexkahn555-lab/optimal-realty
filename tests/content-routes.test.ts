@@ -489,6 +489,41 @@ describe('mode-sensitive tool publish gate (5e)', () => {
   });
 });
 
+/**
+ * Dispatch 7a — the neighborhood route surface: slug ↔ registry round-trip
+ * and the metaFor fallbacks for a fully-TK fixture. The stub/publish gate
+ * itself is pinned in tests/neighborhood-loaders.test.ts.
+ */
+describe('neighborhood routes (7a)', () => {
+  it('the fixture slug composes through href() in both locales', () => {
+    expect(href('neighborhood.fixture-palms-example', 'en')).toBe(
+      '/en/neighborhoods/fixture-palms-example'
+    );
+    expect(href('neighborhood.fixture-palms-example', 'es')).toBe(
+      '/es/vecindarios/fixture-palms-example'
+    );
+  });
+
+  it('metaFor for the TK-named fixture falls to the site name — never a marker', () => {
+    for (const locale of ['en', 'es'] as const) {
+      const meta = metaFor(
+        {
+          id: 'neighborhood.fixture-palms-example',
+          title: { en: 'TK_NBHD_FIXTURE_PALMS_NAME', es: 'TK_NBHD_FIXTURE_PALMS_NAME' },
+          description: {
+            en: 'TK_NBHD_FIXTURE_PALMS_ANSWER',
+            es: 'TK_NBHD_FIXTURE_PALMS_ANSWER',
+          },
+        },
+        locale
+      );
+      expect(meta.title).toBeUndefined();
+      expect(meta.description).toBe('Optimal Realty');
+      expect(JSON.stringify(meta)).not.toMatch(/\bTK_/);
+    }
+  });
+});
+
 describe('FAQ pool integrity', () => {
   it('faq ids are globally unique', () => {
     const ids = ALL_FAQS.map((faq) => faq.id);

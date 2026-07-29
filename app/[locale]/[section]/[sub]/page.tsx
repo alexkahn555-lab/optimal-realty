@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import type {
   Listing,
   Locale,
+  Neighborhood,
   Portal,
   PortalSubpage,
   RouteId,
@@ -12,12 +13,15 @@ import { LEGAL_PAGES, LEGAL_SLUGS, type LegalPageDef } from '@/content/legal';
 import { isLocale } from '@/lib/i18n';
 import {
   activeListings,
+  ALL_FAQS,
   isDiscoverable,
   isSoldArchived,
   localizedClean,
+  publishedNeighborhoods,
   publishedPortals,
   publishedSubpages,
   publishedTools,
+  resolvedFaqs,
   soldListings,
 } from '@/lib/content/loaders';
 import { SITE_ORIGIN } from '@/config/origin';
@@ -51,7 +55,8 @@ type SubMatch =
   | { kind: 'tool'; tool: ToolDef }
   | { kind: 'legal'; page: LegalPageDef }
   | { kind: 'soldIndex' }
-  | { kind: 'listing'; listing: Listing };
+  | { kind: 'listing'; listing: Listing }
+  | { kind: 'neighborhood'; neighborhood: Neighborhood };
 
 function resolveSub(locale: Locale, section: string, sub: string): SubMatch | null {
   const pathname = `/${locale}/${section}/${sub}`;
@@ -67,6 +72,14 @@ function resolveSub(locale: Locale, section: string, sub: string): SubMatch | nu
   for (const slug of LEGAL_SLUGS) {
     if (href(`legal.${slug}`, locale) === pathname) {
       return { kind: 'legal', page: LEGAL_PAGES[slug] };
+    }
+  }
+  // 7a: neighborhood detail — the R-01 gate lives in publishedNeighborhoods
+  // (a stub does not exist as a route); fixtures stay routable behind their
+  // demonstration banner.
+  for (const neighborhood of publishedNeighborhoods()) {
+    if (href(`neighborhood.${neighborhood.slug}`, locale) === pathname) {
+      return { kind: 'neighborhood', neighborhood };
     }
   }
   // The sold-archive index resolves BEFORE listing slugs (the registry slug
@@ -101,6 +114,9 @@ export function generateStaticParams(): {
     ...publishedSubpages().map((s) => routeParams(locale, `subpage.${s.id}`)),
     ...publishedTools().map((tool) => routeParams(locale, `tool.${tool.id}`)),
     ...LEGAL_SLUGS.map((slug) => routeParams(locale, `legal.${slug}`)),
+    ...publishedNeighborhoods().map((n) =>
+      routeParams(locale, `neighborhood.${n.slug}`)
+    ),
     routeParams(locale, 'listings.sold'),
     ...[...activeListings(), ...soldListings()].map((listing) =>
       routeParams(locale, `listing.${listing.slug}`)
@@ -152,6 +168,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ),
         robots: { index: false, follow: true },
       };
+    case 'neighborhood':
+      // TK name/answer fall through metaFor's site-name chain (5b/5c).
+      return metaFor(
+        {
+          id: `neighborhood.${match.neighborhood.slug}`,
+          title: match.neighborhood.name,
+          description: match.neighborhood.answer.answer,
+        },
+        locale
+      );
     case 'soldIndex':
       // The intro is client-reviewed copy; while it is a TK_ placeholder the
       // title doubles as description — a placeholder never ships as SERP copy.
@@ -223,6 +249,21 @@ export default async function SubPage({ params }: PageProps): Promise<JSX.Elemen
     }
     case 'legal':
       return <LegalTemplate page={match.page} locale={locale} />;
+    case 'neighborhood': {
+      // Dynamic per-branch: the template's LeadCta reaches the LeadFormLazy
+      // client boundary, which must never enter this page's STATIC graph
+      // (legal pages share the entry and ship zero JS — Part 8).
+      const { NeighborhoodTemplate } = await import(
+        '@/components/neighborhood/NeighborhoodTemplate'
+      );
+      return (
+        <NeighborhoodTemplate
+          neighborhood={match.neighborhood}
+          faqs={resolvedFaqs(ALL_FAQS, match.neighborhood.faqIds)}
+          locale={locale}
+        />
+      );
+    }
     case 'soldIndex': {
       const { SoldIndexView } = await import('./sold-index-view');
       return <SoldIndexView locale={locale} />;

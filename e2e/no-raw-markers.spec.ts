@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   activeListings,
+  publishedNeighborhoods,
   publishedPortals,
   publishedSubpages,
   publishedTools,
@@ -30,14 +31,17 @@ const ROUTE_IDS: RouteId[] = [
   'tools',
   'listings',
   'listings.sold',
+  'neighborhoods',
   ...publishedPortals().map((p) => `portal.${p.id}` as RouteId),
   ...publishedSubpages().map((s) => `subpage.${s.id}` as RouteId),
   ...publishedTools().map((t) => `tool.${t.id}` as RouteId),
   ...LEGAL_SLUGS.map((slug) => `legal.${slug}` as RouteId),
-  // Routable beyond the sitemap: fixture listings serve behind their banner.
+  // Routable beyond the sitemap: fixture listings and fixture neighborhoods
+  // serve behind their demonstration banners (stubs do not exist as routes).
   ...[...activeListings(), ...soldListings()].map(
     (l) => `listing.${l.slug}` as RouteId
   ),
+  ...publishedNeighborhoods().map((n) => `neighborhood.${n.slug}` as RouteId),
 ];
 
 const PATHS = ROUTE_IDS.flatMap((id) =>
