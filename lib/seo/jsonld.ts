@@ -42,9 +42,10 @@ const TK = /\bTK_/;
 
 /**
  * Recursively drop every string value that carries a TK_ marker, plus any array
- * emptied by that pruning. Objects are preserved with their surviving (confirmed)
- * fields; JSON-LD @id references (`{ '@id': ... }`) survive because their value is
- * a confirmed origin URL, never a marker.
+ * OR object emptied by that pruning. With a configured origin, JSON-LD @id
+ * references (`{ '@id': ... }`) survive on their real origin URL; on a
+ * placeholder origin (6c) the @id strips and the emptied reference object is
+ * omitted with it — a partial reference is worse than none.
  */
 function stripTK(value: unknown): unknown {
   if (typeof value === 'string') {
@@ -60,9 +61,20 @@ function stripTK(value: unknown): unknown {
       const cleaned = stripTK(val);
       if (cleaned !== undefined) out[key] = cleaned;
     }
-    return out;
+    return Object.keys(out).length > 0 ? out : undefined;
   }
   return value;
+}
+
+/**
+ * 6c: the page-local builders (the Breadcrumbs component, the contact view's
+ * graph) emit bare nodes without the pageGraph() wrapper. They route through
+ * the SAME strip, so a placeholder origin cannot reach a <script> tag from
+ * ANY builder — the class 6b found serving TK_DOMAIN on every closed-state
+ * page with breadcrumbs.
+ */
+export function stripNode(node: Record<string, unknown>): object {
+  return (stripTK(node) ?? {}) as object;
 }
 
 /** Build the confirmed entity graph for a locale (locale-invariant identity). */

@@ -4,6 +4,7 @@ import { SITE_ORIGIN } from '@/config/origin';
 import { UI } from '@/content/ui-strings';
 import { t } from '@/lib/i18n';
 import { href } from '@/lib/seo/href';
+import { stripNode } from '@/lib/seo/jsonld';
 import { AnswerBlock, JsonLd } from '@/components/seo';
 import { LeadForm } from '@/components/forms/LeadFormLazy';
 import { Hairline, Heading, Section } from '@/components/primitives';
@@ -22,15 +23,6 @@ const CONTACT_ANSWER_UPDATED = '2026-07-20' as const;
 
 const TK = /\bTK_/;
 
-/** Flat TK omission for the JSON-LD nodes below (page-local; entity graph has its own). */
-function withoutTk(node: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(node).filter(
-      ([, value]) => typeof value !== 'string' || !TK.test(value)
-    )
-  );
-}
-
 /** ContactPage + ContactPoint, merged onto the entity graph via the #agent @id. */
 function contactGraph(locale: Locale): object {
   const url = `${SITE_ORIGIN}${href('contact', locale)}`;
@@ -46,18 +38,21 @@ function contactGraph(locale: Locale): object {
     about: { '@id': agentId },
   };
 
-  const contactPoint = withoutTk({
+  const contactPoint = {
     '@type': 'ContactPoint',
     contactType: 'customer service',
     availableLanguage: ['en', 'es'],
     telephone: ENTITY.entity.phone,
     email: ENTITY.entity.email,
-  });
+  };
 
-  return {
+  // 6c: the shared strip (the pageGraph path) replaces the local flat filter —
+  // it prunes the TK contact fields AND, on a placeholder origin, the @ids,
+  // url, and the about reference they would have emptied.
+  return stripNode({
     '@context': 'https://schema.org',
     '@graph': [page, { '@type': 'RealEstateAgent', '@id': agentId, contactPoint }],
-  };
+  });
 }
 
 export function ContactView({ locale }: { locale: Locale }): JSX.Element {

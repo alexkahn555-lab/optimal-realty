@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SITE_ORIGIN } from '@/config/origin';
+import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { ContactView } from '@/app/[locale]/[section]/contact-view';
 import {
   articleNode,
   entityGraph,
@@ -207,6 +211,106 @@ describe('placeNode from the TK-named fixture (7a)', () => {
       expect(serialized).not.toContain('"@type":"Dataset"');
       expect(serialized).not.toContain('"@type":"RealEstateAgent"');
     }
+  });
+});
+
+/**
+ * Dispatch 6c — the two page-local JSON-LD builders (the Breadcrumbs
+ * component and the contact view's graph) route through the SAME stripTK
+ * path pageGraph() uses. 6b found both interpolating ${SITE_ORIGIN} raw, so
+ * every closed-state page served "item":"https://TK_DOMAIN.example/..." in
+ * structured data — live on production, which runs closed today.
+ *
+ * Open-state output is pinned BYTE-FOR-BYTE against the pre-6c serialized
+ * form (templated on SITE_ORIGIN); closed-state output is pinned exactly,
+ * with URL-carrying properties omitted entirely — never partial, never a
+ * placeholder value.
+ */
+describe('page-local builders route through stripTK (6c)', () => {
+  const ENV_KEY = 'NEXT_PUBLIC_SITE_ORIGIN';
+  const initial = process.env[ENV_KEY];
+
+  afterEach(() => {
+    if (initial === undefined) delete process.env[ENV_KEY];
+    else process.env[ENV_KEY] = initial;
+    vi.resetModules();
+  });
+
+  const CRUMBS = [
+    { id: 'home', label: { en: 'Home', es: 'Inicio' } },
+    { id: 'tools', label: { en: 'Tools', es: 'Herramientas' } },
+  ] as const;
+
+  function ldScripts(markup: string): string[] {
+    return [
+      ...markup.matchAll(
+        /<script type="application\/ld\+json">(.*?)<\/script>/gs
+      ),
+    ].map((m) => m[1] ?? '');
+  }
+
+  it('Breadcrumbs OPEN: byte-identical to the pre-6c serialized form', () => {
+    const markup = renderToStaticMarkup(
+      createElement(Breadcrumbs, { items: [...CRUMBS], locale: 'en' })
+    );
+    const [script] = ldScripts(markup);
+    expect(script).toBe(
+      '{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[' +
+        `{"@type":"ListItem","position":1,"name":"Home","item":"${SITE_ORIGIN}/en"},` +
+        `{"@type":"ListItem","position":2,"name":"Tools","item":"${SITE_ORIGIN}/en/tools"}]}`
+    );
+  });
+
+  it('Breadcrumbs CLOSED: item omitted entirely — no marker, no partial', async () => {
+    delete process.env[ENV_KEY];
+    vi.resetModules();
+    const { Breadcrumbs: ClosedBreadcrumbs } = await import(
+      '@/components/seo/Breadcrumbs'
+    );
+    const markup = renderToStaticMarkup(
+      createElement(ClosedBreadcrumbs, { items: [...CRUMBS], locale: 'en' })
+    );
+    const [script] = ldScripts(markup);
+    expect(script).toBe(
+      '{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[' +
+        '{"@type":"ListItem","position":1,"name":"Home"},' +
+        '{"@type":"ListItem","position":2,"name":"Tools"}]}'
+    );
+    expect(markup).not.toMatch(/\bTK_/);
+  });
+
+  it('contact graph OPEN: byte-identical to the pre-6c serialized form', () => {
+    const markup = renderToStaticMarkup(
+      createElement(ContactView, { locale: 'en' })
+    );
+    const script = ldScripts(markup).find((s) => s.includes('"ContactPage"'));
+    expect(script).toBe(
+      '{"@context":"https://schema.org","@graph":[' +
+        `{"@type":"ContactPage","@id":"${SITE_ORIGIN}/en/contact#contactpage","url":"${SITE_ORIGIN}/en/contact",` +
+        '"name":"How do I contact Optimal Realty?","inLanguage":"en","dateModified":"2026-07-20",' +
+        `"about":{"@id":"${SITE_ORIGIN}/#agent"}},` +
+        `{"@type":"RealEstateAgent","@id":"${SITE_ORIGIN}/#agent","contactPoint":` +
+        '{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["en","es"]}}]}'
+    );
+  });
+
+  it('contact graph CLOSED: @ids, url and the emptied about ref all omitted', async () => {
+    delete process.env[ENV_KEY];
+    vi.resetModules();
+    const { ContactView: ClosedContactView } = await import(
+      '@/app/[locale]/[section]/contact-view'
+    );
+    const markup = renderToStaticMarkup(
+      createElement(ClosedContactView, { locale: 'en' })
+    );
+    const script = ldScripts(markup).find((s) => s.includes('"ContactPage"'));
+    expect(script).toBe(
+      '{"@context":"https://schema.org","@graph":[' +
+        '{"@type":"ContactPage","name":"How do I contact Optimal Realty?","inLanguage":"en","dateModified":"2026-07-20"},' +
+        '{"@type":"RealEstateAgent","contactPoint":' +
+        '{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["en","es"]}}]}'
+    );
+    expect(script).not.toMatch(/\bTK_/);
   });
 });
 

@@ -57,6 +57,31 @@ test('the walker covers every route class (loader-derived, non-trivial)', () => 
   expect(PATHS).toContain('/es/propiedades/100-fixture-boulevard-coral-gables');
 });
 
+/**
+ * Dispatch 6c — the closed-state sweep. The per-route tests below read
+ * page.content() (the hydrated DOM); this walk reads the RAW response body,
+ * and it names the placeholder host explicitly. The 6a walker was only ever
+ * run against open-state builds (.env.local configures an origin locally),
+ * which is exactly why the closed-state JSON-LD leak survived from Phase 3
+ * to 6b: against a closed build this test is the one that fails first, and
+ * against an open build it still catches a half-configured build serving the
+ * placeholder host anywhere. Meaningful in both states, vacuous in neither.
+ */
+test('the placeholder host reaches no served document in any origin state', async ({
+  request,
+}) => {
+  const offenders: string[] = [];
+  for (const path of PATHS) {
+    const response = await request.get(path);
+    expect(response.status(), `${path} must serve`).toBe(200);
+    if ((await response.text()).includes('TK_DOMAIN')) offenders.push(path);
+  }
+  expect(
+    offenders,
+    `placeholder host served on: ${offenders.join(', ')}`
+  ).toEqual([]);
+});
+
 for (const path of PATHS) {
   test(`${path} serves zero raw TK_ markers`, async ({ page }) => {
     const response = await page.goto(path);

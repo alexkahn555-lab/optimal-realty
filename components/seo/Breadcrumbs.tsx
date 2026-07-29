@@ -1,6 +1,7 @@
 import { SITE_ORIGIN } from '@/config/origin';
 import { UI } from '@/content/ui-strings';
 import { t } from '@/lib/i18n';
+import { stripNode } from '@/lib/seo/jsonld';
 import { href } from '@/lib/seo/href';
 import type { Locale, Localized, RouteId } from '@/lib/types';
 import { JsonLd } from './JsonLd';
@@ -50,7 +51,9 @@ export function Breadcrumbs({ items, locale }: BreadcrumbsProps): JSX.Element | 
           })}
         </ol>
       </nav>
-      <JsonLd graph={node} />
+      {/* 6c: same strip as pageGraph — a placeholder origin yields items
+          without `item` rather than URLs on a nonexistent host. */}
+      <JsonLd graph={stripNode(node)} />
     </>
   );
 }
