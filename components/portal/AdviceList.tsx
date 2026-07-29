@@ -32,7 +32,9 @@ export function AdviceList({ advice, locale }: AdviceListProps): JSX.Element | n
           <Heading level={3}>{t(section.heading, locale)}</Heading>
           <div className="mt-3">
             {isTK(section.body) ? (
-              <PlaceholderTK id={section.body.en} />
+              // Marker prefix stripped (the 4b convention, swept in 6a): the
+              // id must never re-introduce a raw marker into the document.
+              <PlaceholderTK id={section.body.en.replace(TK, '')} />
             ) : (
               <Prose>{t(section.body, locale)}</Prose>
             )}

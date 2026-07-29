@@ -17,6 +17,13 @@
  *   strict  (CONTENT_STRICT=1; set on production at Phase 6)
  *           Any surviving TK_ marker exits 1 and fails the build.
  *
+ * COVERAGE BOUNDARY (corrected 6a): this scan counts markers in SOURCE files;
+ * it cannot see whether a marker reaches the SERVED document (a render site
+ * that skips <PlaceholderTK>, or a React key serializing into the RSC flight
+ * payload — the class that shipped raw legal/about markers from Phase 3 to
+ * 6a). That surface is gated by e2e/no-raw-markers.spec.ts, which walks every
+ * published route in both locales and asserts zero raw markers in the HTML.
+ *
  * This script is intentionally dependency-free (Node built-ins only) so it runs
  * before `npm install` of app deps if needed and never becomes a build risk itself.
  */

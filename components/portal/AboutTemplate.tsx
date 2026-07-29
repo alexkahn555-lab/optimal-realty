@@ -89,7 +89,9 @@ export function AboutTemplate({ locale }: AboutTemplateProps): JSX.Element {
         </dl>
 
         {isTK(ABOUT_BIO) ? (
-          <PlaceholderTK id={ABOUT_BIO.en} />
+          // Marker prefix stripped (the 4b convention, swept in 6a): the id
+          // must never re-introduce a raw marker into the served document.
+          <PlaceholderTK id={ABOUT_BIO.en.replace(TK, '')} />
         ) : (
           <Prose>{t(ABOUT_BIO, locale)}</Prose>
         )}

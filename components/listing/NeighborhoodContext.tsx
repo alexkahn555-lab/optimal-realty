@@ -1,8 +1,9 @@
 import { localizedClean, publishedNeighborhoods } from '@/lib/content/loaders';
 import { t } from '@/lib/i18n';
 import { href } from '@/lib/seo/href';
-import type { Listing, Locale } from '@/lib/types';
+import type { Listing, Locale, Localized } from '@/lib/types';
 import { Heading, Prose } from '@/components/primitives';
+import { PlaceholderTK } from '@/components/seo/PlaceholderTK';
 
 import { LISTING_UI } from './strings';
 
@@ -12,8 +13,13 @@ import { LISTING_UI } from './strings';
  * every render until Phase 7 ships the neighborhood engine (no neighborhoods
  * exist; the fixtures carry no neighborhoodId). The module is real so Phase 7
  * content lights it up without touching this file: name links to the
- * neighborhood page, the answer line renders, TK overview stays absent.
+ * neighborhood page, the answer line renders (an unfilled answer as a visible
+ * PlaceholderTK — swept in 6a so Phase 7 inherits the guard), TK overview
+ * stays absent.
  */
+
+const TK = /\bTK_/;
+const isTK = (value: Localized): boolean => TK.test(value.en) || TK.test(value.es);
 export function NeighborhoodContext({
   listing,
   locale,
@@ -39,9 +45,13 @@ export function NeighborhoodContext({
         </a>
       </p>
       <div className="mt-2">
-        <Prose>
-          <p>{t(neighborhood.answer.answer, locale)}</p>
-        </Prose>
+        {isTK(neighborhood.answer.answer) ? (
+          <PlaceholderTK id={neighborhood.answer.answer.en.replace(TK, '')} />
+        ) : (
+          <Prose>
+            <p>{t(neighborhood.answer.answer, locale)}</p>
+          </Prose>
+        )}
       </div>
       {localizedClean(neighborhood.overview) ? (
         <div className="mt-2">

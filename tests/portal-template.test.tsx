@@ -1,6 +1,13 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { UI } from '@/content/ui-strings';
+import { LEGAL_PAGES } from '@/content/legal';
+import { LISTING_L_2026_001 } from '@/content/listings/l-2026-001';
+import { AboutTemplate } from '@/components/portal/AboutTemplate';
+import { AdviceList } from '@/components/portal/AdviceList';
+import { LegalTemplate } from '@/components/portal/LegalTemplate';
+import { FeatureGroups } from '@/components/listing/FeatureGroups';
+import { NeighborhoodContext } from '@/components/listing/NeighborhoodContext';
 import { BUYERS_PORTAL } from '@/content/portals/buyers';
 import { INVESTORS_PORTAL } from '@/content/portals/investors';
 import { LANDLORDS_PORTAL } from '@/content/portals/landlords';
@@ -24,6 +31,35 @@ import { SubpageTemplate } from '@/components/portal/SubpageTemplate';
  * ATTRIBUTION each template passes (5c) is assertable from static markup —
  * the real island is exercised end-to-end in e2e/portals.spec.ts.
  */
+
+// 6a sweep: NeighborhoodContext resolves through publishedNeighborhoods(),
+// which is EMPTY until Phase 7 — inject one TK-answer neighborhood so the
+// guard is exercisable without touching content/ (everything else real).
+vi.mock('@/lib/content/loaders', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@/lib/content/loaders')>();
+  return {
+    ...mod,
+    publishedNeighborhoods: () => [
+      {
+        id: 'test-nbhd',
+        slug: 'test-nbhd',
+        name: { en: 'Test Neighborhood', es: 'Vecindario de Prueba' },
+        county: 'Miami-Dade',
+        status: 'published',
+        answer: {
+          question: { en: 'What is it like?', es: '¿Cómo es?' },
+          answer: { en: 'TK_NBHD_TEST_ANSWER', es: 'TK_NBHD_TEST_ANSWER' },
+          updated: '2026-07-28',
+        },
+        overview: { en: 'TK_NBHD_TEST_OVERVIEW', es: 'TK_NBHD_TEST_OVERVIEW' },
+        geo: { lat: 25.7, lng: -80.2 },
+        relatedPortalIds: [],
+        faqIds: [],
+        priority: 1,
+      },
+    ],
+  };
+});
 
 vi.mock('@/components/forms/LeadFormLazy', () => ({
   LeadForm: (props: Record<string, unknown>) => (
@@ -290,6 +326,95 @@ describe('SubpageTemplate — the three remaining subpages (5d)', () => {
       });
     });
   }
+});
+
+/**
+ * Dispatch 6a — the raw-marker sweep. LegalTemplate, AboutTemplate and
+ * AdviceList passed the UNSTRIPPED marker as the placeholder id since Phase 3
+ * (⟨ TK · TK_LEGAL_PRIVACY_BODY ⟩ served the raw string); NeighborhoodContext
+ * rendered answer prose with no guard; FeatureGroups keyed and rendered
+ * feature labels unfiltered. Every site now routes through the shared
+ * PlaceholderTK / clean-filter idioms — pinned here at the markup layer, and
+ * at the served-HTML layer by e2e/no-raw-markers.spec.ts.
+ */
+describe('raw marker sweep (6a)', () => {
+  it('LegalTemplate: the attorney body renders a stripped placeholder, never the marker', () => {
+    for (const locale of ['en', 'es'] as const) {
+      const markup = renderToStaticMarkup(
+        <LegalTemplate page={LEGAL_PAGES.privacy} locale={locale} />
+      );
+      expect(markup).toContain('⟨ TK · LEGAL_PRIVACY_BODY ⟩');
+      expect(markup).not.toMatch(/\bTK_/);
+    }
+  });
+
+  it('AboutTemplate: the bio renders a stripped placeholder, never the marker', () => {
+    for (const locale of ['en', 'es'] as const) {
+      const markup = renderToStaticMarkup(<AboutTemplate locale={locale} />);
+      expect(markup).toContain('⟨ TK · ABOUT_BIO ⟩');
+      expect(markup).not.toMatch(/\bTK_/);
+    }
+  });
+
+  it('AdviceList: a published TK-body section renders a stripped placeholder', () => {
+    const markup = renderToStaticMarkup(
+      <AdviceList
+        advice={[
+          {
+            id: 'test-advice',
+            portalId: 'sellers',
+            heading: { en: 'How should I price?', es: '¿Cómo fijo el precio?' },
+            body: { en: 'TK_ADVICE_TEST_BODY', es: 'TK_ADVICE_TEST_BODY' },
+            reviewedBy: 'raul-perez',
+            status: 'published',
+          },
+        ]}
+        locale="en"
+      />
+    );
+    expect(markup).toContain('⟨ TK · ADVICE_TEST_BODY ⟩');
+    expect(markup).not.toMatch(/\bTK_/);
+  });
+
+  it('NeighborhoodContext: an unfilled answer renders a placeholder; TK overview stays absent', () => {
+    const markup = renderToStaticMarkup(
+      <NeighborhoodContext
+        listing={{ ...LISTING_L_2026_001, neighborhoodId: 'test-nbhd' }}
+        locale="en"
+      />
+    );
+    expect(markup).toContain('Test Neighborhood');
+    expect(markup).toContain('⟨ TK · NBHD_TEST_ANSWER ⟩');
+    expect(markup).not.toContain('NBHD_TEST_OVERVIEW'); // omission, not render
+    expect(markup).not.toMatch(/\bTK_/);
+  });
+
+  it('FeatureGroups: an unfilled feature label degrades by omission — never a raw key', () => {
+    const markup = renderToStaticMarkup(
+      <FeatureGroups
+        listing={{
+          ...LISTING_L_2026_001,
+          featureGroups: [
+            {
+              group: { en: 'Interior', es: 'Interior' },
+              items: [
+                { en: 'Impact windows', es: 'Ventanas de impacto' },
+                { en: 'TK_FEATURE_TEST', es: 'TK_FEATURE_TEST' },
+              ],
+            },
+            {
+              group: { en: 'TK_GROUP_TEST', es: 'TK_GROUP_TEST' },
+              items: [{ en: 'Pool', es: 'Piscina' }],
+            },
+          ],
+        }}
+        locale="en"
+      />
+    );
+    expect(markup).toContain('Impact windows');
+    expect(markup).not.toContain('Pool'); // its group label is unfilled
+    expect(markup).not.toMatch(/\bTK_/);
+  });
 });
 
 describe('SubpageTemplate', () => {

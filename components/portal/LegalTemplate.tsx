@@ -43,7 +43,9 @@ export function LegalTemplate({ page, locale }: LegalTemplateProps): JSX.Element
           {`${t(UI.answer.updated, locale)} ${updated}`}
         </p>
         {isTK(page.body) ? (
-          <PlaceholderTK id={page.body.en} />
+          // Marker prefix stripped (the 4b convention, swept in 6a): the id
+          // must never re-introduce a raw marker into the served document.
+          <PlaceholderTK id={page.body.en.replace(TK, '')} />
         ) : (
           <Prose>{t(page.body, locale)}</Prose>
         )}

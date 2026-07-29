@@ -1,3 +1,4 @@
+import { localizedClean } from '@/lib/content/loaders';
 import { t } from '@/lib/i18n';
 import type { Listing, Locale } from '@/lib/types';
 import { Heading } from '@/components/primitives';
@@ -15,7 +16,16 @@ export function FeatureGroups({
   listing: Listing;
   locale: Locale;
 }): JSX.Element | null {
-  const groups = listing.featureGroups.filter((group) => group.items.length > 0);
+  // 6a sweep: feature labels are structural fact-shaped data and SHOULD never
+  // carry a marker, but an unfilled entry must degrade by omission rather
+  // than serve raw — both as text and as the React key (keys serialize into
+  // the RSC flight payload). Same clean-filter idiom as highlights.
+  const groups = listing.featureGroups
+    .map((group) => ({
+      group: group.group,
+      items: group.items.filter(localizedClean),
+    }))
+    .filter((group) => localizedClean(group.group) && group.items.length > 0);
   if (groups.length === 0) return null;
 
   return (
