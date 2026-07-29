@@ -31,3 +31,4 @@ next-env.d.ts
 /public/listings/**/_raw/
 test-results/
 playwright-report/
+verify.sh
