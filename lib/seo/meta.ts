@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { Locale, Localized, RouteId } from '@/lib/types';
-import { SITE_ORIGIN } from '@/config/origin';
+import { ORIGIN_IS_PLACEHOLDER, SITE_ORIGIN } from '@/config/origin';
 import { href } from '@/lib/seo/href';
 
 /**
@@ -77,18 +77,27 @@ export function metaFor(input: MetaInput, locale: Locale): Metadata {
     // Bare title fills the layout's %s template; omitted → layout default.
     ...(pageTitle ? { title: pageTitle } : {}),
     description,
-    alternates: {
-      canonical,
-      languages: {
-        en: enUrl,
-        es: esUrl,
-        'x-default': enUrl,
-      },
-    },
+    // 6b: a placeholder origin is never advertised — canonical, the hreflang
+    // alternates and og:url are withheld until a real origin is configured
+    // (they would resolve on a nonexistent host, and TK_DOMAIN may not reach
+    // a served document). The robots meta below stays index,follow in both
+    // states: noindex belongs to the x-robots-tag header alone.
+    ...(ORIGIN_IS_PLACEHOLDER
+      ? {}
+      : {
+          alternates: {
+            canonical,
+            languages: {
+              en: enUrl,
+              es: esUrl,
+              'x-default': enUrl,
+            },
+          },
+        }),
     openGraph: {
       title: ogTitle,
       description,
-      url: canonical,
+      ...(ORIGIN_IS_PLACEHOLDER ? {} : { url: canonical }),
       siteName: SITE_NAME,
       locale: OG_LOCALE[locale],
       type: 'website',

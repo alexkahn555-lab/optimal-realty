@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { SITE_ORIGIN } from '@/config/origin';
 import { clampDescription, metaFor } from '@/lib/seo/meta';
 
 describe('clampDescription()', () => {
@@ -157,6 +158,70 @@ describe('metaFor()', () => {
         'en'
       );
       expect(m.title).toBeUndefined();
+    });
+  });
+
+  /**
+   * Dispatch 6b — a placeholder origin must never be advertised. With no real
+   * origin configured, canonical, the hreflang alternates and og:url are
+   * withheld entirely (they would point at a nonexistent host); with a real
+   * origin, every absolute URL resolves on it and the placeholder host appears
+   * nowhere. The robots meta stays index,follow in both states — noindex is
+   * owned by the x-robots-tag header (one mechanism, not two).
+   */
+  describe('origin gating (6b)', () => {
+    const ENV_KEY = 'NEXT_PUBLIC_SITE_ORIGIN';
+    const initial = process.env[ENV_KEY];
+
+    afterEach(() => {
+      if (initial === undefined) delete process.env[ENV_KEY];
+      else process.env[ENV_KEY] = initial;
+      vi.resetModules();
+    });
+
+    /** metaFor with the origin env cleared — a fresh module graph each time. */
+    async function metaWithPlaceholderOrigin() {
+      delete process.env[ENV_KEY];
+      vi.resetModules();
+      const { metaFor: freshMetaFor } = await import('@/lib/seo/meta');
+      return freshMetaFor(
+        { id: 'home', description: { en: 'English desc.', es: 'Descripción.' } },
+        'en'
+      );
+    }
+
+    it('placeholder origin: canonical, hreflang and og:url are withheld', async () => {
+      const m = await metaWithPlaceholderOrigin();
+      expect(m.alternates).toBeUndefined();
+      expect((m.openGraph as { url?: string }).url).toBeUndefined();
+      expect(JSON.stringify(m)).not.toMatch(/\bTK_/);
+    });
+
+    it('placeholder origin: description and og basics survive; robots meta untouched', async () => {
+      const m = await metaWithPlaceholderOrigin();
+      expect(m.description).toBe('English desc.');
+      expect((m.openGraph as { siteName?: string }).siteName).toBe('Optimal Realty');
+      expect(m.robots).toEqual({ index: true, follow: true });
+    });
+
+    it('configured origin: every absolute URL resolves on it — never the placeholder', () => {
+      // setup.ts configures a real origin before any module loads.
+      const m = metaFor(
+        { id: 'home', description: { en: 'English desc.', es: 'Descripción.' } },
+        'en'
+      );
+      const alternates = m.alternates as {
+        canonical?: string;
+        languages?: Record<string, string>;
+      };
+      expect(String(alternates.canonical).startsWith(SITE_ORIGIN)).toBe(true);
+      for (const url of Object.values(alternates.languages ?? {})) {
+        expect(String(url).startsWith(SITE_ORIGIN)).toBe(true);
+      }
+      expect(String((m.openGraph as { url?: string }).url).startsWith(SITE_ORIGIN)).toBe(
+        true
+      );
+      expect(JSON.stringify(m)).not.toContain('TK_DOMAIN.example');
     });
   });
 });

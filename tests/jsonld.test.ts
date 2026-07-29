@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SITE_ORIGIN } from '@/config/origin';
 import {
   articleNode,
   entityGraph,
@@ -31,6 +32,23 @@ describe('entityGraph()', () => {
     expect(ids.every(Boolean)).toBe(true);
     expect(new Set(ids).size).toBe(3);
     expect(graph['@graph'].length).toBe(3);
+  });
+
+  /**
+   * Dispatch 6b — with a real origin configured (setup.ts), every @id resolves
+   * on it and the placeholder host reaches no built artifact. (With no origin,
+   * stripTK already drops the TK-carrying @ids — the closed state self-cleans.)
+   */
+  it('every @id resolves on the configured origin — never the placeholder', () => {
+    const graph = entityGraph('en') as unknown as {
+      '@graph': Array<{ '@id'?: string }>;
+    };
+    const ids = graph['@graph'].map((node) => String(node['@id']));
+    expect(ids).toHaveLength(3);
+    for (const id of ids) {
+      expect(id.startsWith(`${SITE_ORIGIN}/#`)).toBe(true);
+    }
+    expect(JSON.stringify(graph)).not.toContain('TK_DOMAIN.example');
   });
 
   it('emits the confirmed values', () => {

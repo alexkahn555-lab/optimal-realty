@@ -1,3 +1,23 @@
+/**
+ * Origin gate (6b). Mirrors ORIGIN_IS_PLACEHOLDER in config/origin.ts — this
+ * file cannot import TypeScript, so the two-line condition is restated here.
+ * Read at call time (not module scope) so headers() sees the env of the build
+ * that invokes it.
+ */
+function originConfigured() {
+  const origin = (process.env.NEXT_PUBLIC_SITE_ORIGIN ?? '').trim();
+  return origin !== '' && !origin.includes('TK_DOMAIN.example');
+}
+
+if (!originConfigured()) {
+  console.warn(
+    '\n  ⚠ NEXT_PUBLIC_SITE_ORIGIN is unset or still the TK_DOMAIN placeholder (D-06 open).\n' +
+      '    Degraded until a real origin is configured: canonicals, hreflang alternates,\n' +
+      '    the sitemap, JSON-LD @ids, and email from-addresses. robots.txt serves a full\n' +
+      '    disallow and every response carries x-robots-tag: noindex, nofollow.\n'
+  );
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -17,6 +37,21 @@ const nextConfig = {
   // Next 16 removed build-time lint; the `eslint` config key is unsupported.
   typescript: {
     ignoreBuildErrors: false,
+  },
+  // 6b: indexability is closed by default. With no real origin configured,
+  // every response bears noindex — the ONE noindex mechanism (robots.ts closes
+  // crawling; this closes indexing). The switch is origin configuration, never
+  // NODE_ENV or a Vercel environment name, so a production deploy with no
+  // domain configured is still closed. Evaluated once per build and baked into
+  // the routes manifest.
+  async headers() {
+    if (originConfigured()) return [];
+    return [
+      {
+        source: '/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+    ];
   },
 };
 
